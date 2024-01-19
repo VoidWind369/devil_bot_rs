@@ -6,8 +6,8 @@ use crate::config::Config;
 
 pub async fn listen_msg(events_body: EventsBody, config: &Config) {
     log_info!("群聊消息");
-    let Some(channel) = events_body.channel else { todo!() };
-    let Some(message) = events_body.message else { todo!() };
+    let Some(channel) = events_body.channel else { panic!("NONE") };
+    let Some(message) = events_body.message else { panic!("NONE") };
 
     if Some("指令".to_string()).eq(&message.content) {
         let res = send_message(&channel.id, "CRAZY TEST", config).await;
@@ -50,8 +50,8 @@ pub async fn listen_msg(events_body: EventsBody, config: &Config) {
 
 pub async fn listen_user_msg(events_body: EventsBody, config: &Config) {
     log_info!("私信消息");
-    let Some(channel) = events_body.channel else { todo!() };
-    let Some(message) = events_body.message else { todo!() };
+    let Some(channel) = events_body.channel else { panic!("NONE") };
+    let Some(message) = events_body.message else { panic!("NONE") };
 
     // 更新#s盟#2024-01-01 10:00
     if message.clone().content.unwrap_or("".to_string()).contains("更新#") {

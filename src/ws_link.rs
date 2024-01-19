@@ -33,7 +33,7 @@ pub async fn conn() -> Result<(), tungstenite::Error> {
                     if !events.op.eq(&0) {
                         continue;
                     }
-                    let Some(body) = events.body else { todo!() };
+                    let Some(body) = events.body else { panic!("NONE") };
                     if let Some(channel) = body.clone().channel {
                         if let Some(channel_type) = channel.r#type {
                             match channel_type {
