@@ -1,0 +1,19 @@
+[package]
+name = "devil_bot_rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "*", features = ["full"] }
+tokio-util = { version = "*", features = ["codec"] }
+futures = "*"
+tokio-tungstenite = { version = "*", features = ["native-tls", "rustls-tls-webpki-roots"] }
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+serde_yaml = "*"
+reqwest = { version = "*", features = ["multipart", "stream", "json", "blocking", "serde_json"] }
+rand = "*"
+chrono = "*"
+urlencoding = "*"
