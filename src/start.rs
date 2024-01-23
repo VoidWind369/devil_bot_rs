@@ -9,32 +9,39 @@ pub async fn listen_msg(events_body: EventsBody, config: &Config) {
     let Some(channel) = events_body.channel else { panic!("NONE") };
     let Some(message) = events_body.message else { panic!("NONE") };
 
+    log_info!("{:?}", &message.content);
     if Some("指令".to_string()).eq(&message.content) {
         let res = send_message(&channel.id, "CRAZY TEST", config).await;
         log_info!("{res}")
     }
 
     if Some("时间".to_string()).eq(&message.content) {
-        set_xin().await;
-        let response = Client::new()
-            .get("http://get.cocsnipe.top/listTime".to_string())
-            .send()
-            .await
-            .unwrap();
-
-        let res: Vec<Value> = response.json().await.expect("获取失败");
-
-        let mut text = String::new();
-        text.push_str("⟦ 时间集 ⟧");
-        for re in res {
-            let union = re["union"].as_str().expect("名称空");
-            let day = re["day"].as_str().expect("时间空");
-            let time = &re["un_time"].as_str().expect("时间空")[0..5];
-            text.push_str(&format!("\r\n{} {}{}", union, day, time))
-        }
+        let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
         let res = send_message(&channel.id, &text, config).await;
         log_info!("{res}")
     }
+
+    // if Some("时间".to_string()).eq(&message.content) {
+    //     set_xin().await;
+    //     let response = Client::new()
+    //         .get("http://get.cocsnipe.top/listTime".to_string())
+    //         .send()
+    //         .await
+    //         .unwrap();
+    //
+    //     let res: Vec<Value> = response.json().await.expect("获取失败");
+    //
+    //     let mut text = String::new();
+    //     text.push_str("⟦ 时间集 ⟧");
+    //     for re in res {
+    //         let union = re["union"].as_str().expect("名称空");
+    //         let day = re["day"].as_str().expect("时间空");
+    //         let time = &re["un_time"].as_str().expect("时间空")[0..5];
+    //         text.push_str(&format!("\r\n{} {}{}", union, day, time))
+    //     }
+    //     let res = send_message(&channel.id, &text, config).await;
+    //     log_info!("{res}")
+    // }
 
     if Some("爱玩".to_string()).eq(&message.content) || Some("启动码".to_string()).eq(&message.content) {
         let qdm = get_aw_qdm().await;
@@ -110,4 +117,14 @@ async fn get_aw_qdm() -> [String; 2] {
     let res = response.json().await.unwrap();
     log_info!("启动码{:?}", res);
     res
+}
+
+fn formal_fwa(string: String) -> String {
+    //FWA 开搜时间
+    //Saturday, January 20, 2024 8:40 AM
+    let binding = string.replace("FWA 开搜时间\n","");
+    let time_str = binding.trim_start_matches(" ");
+    let binding = time_str.replace(',', "");
+    let vec = binding.split(" ").collect::<Vec<&str>>();
+    vec[0].parse().unwrap()
 }
