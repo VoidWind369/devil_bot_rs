@@ -16,6 +16,7 @@ pub async fn listen_msg(events_body: EventsBody, config: &Config) {
     }
 
     if Some("时间".to_string()).eq(&message.content) {
+        set_xin().await;
         let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
         let res = send_message(&channel.id, &text, config).await;
         log_info!("{res}")
@@ -119,7 +120,7 @@ async fn get_aw_qdm() -> [String; 2] {
     res
 }
 
-fn formal_fwa(string: String) -> String {
+fn _formal_fwa(string: String) -> String {
     //FWA 开搜时间
     //Saturday, January 20, 2024 8:40 AM
     let binding = string.replace("FWA 开搜时间\n","");
