@@ -51,6 +51,7 @@ pub async fn send_message(channel_id: &Option<String>, content: &str, config: &C
             "channel_id": channel_id,
             "content": content
         });
+    log_info!("{}", json.clone());
     let res = Client::new().post(format!("{}/message.create", config.send_url))
         .header("Authorization", format!("Bearer {}", config.auth_token))
         .json(&json).send().await;

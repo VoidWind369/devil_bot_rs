@@ -1,3 +1,3 @@
-ws_url: ws://43.134.32.208:5500/v1/events
-send_url: http://43.134.32.208:5500/v1
-auth_token: 24fe07c4d791866e56d2db0230fa487b6fb10b59a337aa7da01da91038c37644
+ws_url: ws://119.91.53.206:5500/v1/events
+send_url: http://119.91.53.206:5500/v1
+auth_token: 9502748c4504e155adb311a94c206e7357bfa00527bb2768a7a5c0e1a705c4cf
