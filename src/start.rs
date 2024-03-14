@@ -7,7 +7,8 @@ use crate::api::*;
 use crate::api::cq_http::*;
 use crate::util::Config;
 
-pub async fn listen(cq_data: CqData<'_>) {
+pub async fn listen(cq_data: CqData<'_>, config: &Config) {
+    let use_group = config.use_group.unwrap();
     let sender = cq_data.sender.unwrap().user_id;
     let msg = cq_data.raw_message.unwrap_or("".to_string());
     let group_id = cq_data.group_id;
@@ -22,7 +23,7 @@ pub async fn listen(cq_data: CqData<'_>) {
                 let time = to_native_dt(prompt_split[0]);
                 let result = set_jin_time(Option::from(time.to_string()), None).await;
                 if result > 0 {
-                    send_group_msg(group, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                    send_group_msg(use_group, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
                 }
             }
         }
@@ -32,7 +33,7 @@ pub async fn listen(cq_data: CqData<'_>) {
         if msg.eq("指令") {
             send_user_msg(sender.unwrap(), group_id, "zl").await;
         }
-        if msg.eq("40时间") && (group_id == Some(391533787) || group_id == Some(622678662)) {
+        if msg.eq("40时间") && (group_id == Some(use_group) || group_id == Some(622678662)) {
             let result = get_jin_time().await;
             send_group_msg(group, "请查看私聊", sender.unwrap()).await;
             send_user_msg(sender.unwrap(), group_id, &format!("40时间 {result}")).await;

@@ -4,6 +4,7 @@ use tokio::{net::TcpStream};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
 use crate::*;
 use crate::api::cq_http::CqData;
+use crate::util::Config;
 
 pub async fn conn() {
     let config = util::Config::get().await;
@@ -20,6 +21,7 @@ pub async fn conn() {
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
     log_info!("{}", "收发线程loop");
+    let config = Config::get().await;
     loop {
         if let Some(Ok(Message::Text(data))) = message.next().await {
             log_info!("WebSocket分片连接: {:?}", &data);
@@ -27,7 +29,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
             if let None = &cq_data.raw_message {
                 continue;
             }
-            start::listen(cq_data.clone()).await;
+            start::listen(cq_data.clone(), &config).await;
         } else {
             log_error!("收发线程中断");
             break;

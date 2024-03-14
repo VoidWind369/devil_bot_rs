@@ -23,6 +23,7 @@ pub struct Config {
     pub appid: Option<String>,
     pub token: Option<String>,
     pub app_secret: Option<String>,
+    pub use_group: Option<i64>,
     pub server_url: Option<String>,
 }
 
