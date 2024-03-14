@@ -1,8 +1,8 @@
-mod ws_link;
 mod log;
 mod start;
-mod config;
 mod api;
+mod link;
+mod util;
 
 #[tokio::main]
 async fn main() {
@@ -16,6 +16,6 @@ async fn main() {
     log_info!("登录中....");
 
     loop {
-        ws_link::conn().await.unwrap();
+        link::conn().await;
     }
 }

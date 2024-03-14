@@ -9,6 +9,7 @@ edition = "2021"
 tokio = { version = "*", features = ["full"] }
 tokio-util = { version = "*", features = ["codec"] }
 futures = "*"
+futures-util = "*"
 tokio-tungstenite = { version = "*", features = ["native-tls", "rustls-tls-webpki-roots"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
