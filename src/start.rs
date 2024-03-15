@@ -34,7 +34,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
             send_user_msg(sender.unwrap(), group_id, "zl").await;
         }
         if msg.eq("40时间") && (group_id == Some(use_group) || group_id == Some(622678662)) {
-            let result = get_jin_time().await;
+            let result = get_jin_time(sender.unwrap()).await;
             send_group_msg(group, "请查看私聊", sender.unwrap()).await;
             send_user_msg(sender.unwrap(), group_id, &format!("40时间 {result}")).await;
         }
@@ -81,10 +81,14 @@ struct UpJinTime {
     deviate_time: Option<i64>,
 }
 
-async fn get_jin_time() -> String {
+async fn get_jin_time(user: i64) -> String {
     let config = Config::get().await;
-    let url = format!("{}/get_time/1", config.server_url.unwrap());
-    let response = Client::new().get(url).send().await;
+    let url = format!("{}/get_time", config.server_url.unwrap());
+    let json = json!({
+        "id": 1,
+        "user": user.to_string()
+    });
+    let response = Client::new().post(url).json(&json).send().await;
     match response {
         Ok(re) => {
             let res = re.json::<Value>().await.unwrap();
