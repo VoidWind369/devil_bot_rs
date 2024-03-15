@@ -1,5 +1,6 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::{log_error, log_info};
 use crate::util::Config;
@@ -25,6 +26,10 @@ pub struct CqData<'a> {
     pub message: Option<Vec<CqDataMessage>>,
     pub message_format: Option<&'a str>,
     pub group_id: Option<i64>,
+    // friend
+    pub request_type: Option<&'a str>,
+    pub comment: Option<&'a str>,
+    pub flag: Option<&'a str>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -100,7 +105,7 @@ pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
     }
 }
 
-pub async fn send_user_msg(user_id:i64, group_id: Option<i64>, text: &str) {
+pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
     let config = Config::get().await;
     let url = format!("{}/send_private_msg", config.api_url.unwrap());
 
@@ -122,6 +127,24 @@ pub async fn send_user_msg(user_id:i64, group_id: Option<i64>, text: &str) {
     match response {
         Ok(re) => {
             log_info!("User {}", re.text().await.unwrap())
+        }
+        Err(e) => {
+            log_error!("{e}")
+        }
+    }
+}
+
+pub async fn set_friend_add_request(flag: &str, approve: bool) {
+    let config = Config::get().await;
+    let url = format!("{}/set_friend_add_request", config.api_url.unwrap());
+    let json = json!({
+        "flag": flag,
+        "approve": approve,
+    });
+    let response = Client::new().post(url).json(&json).send().await;
+    match response {
+        Ok(re) => {
+            log_info!("Friend {}", re.text().await.unwrap())
         }
         Err(e) => {
             log_error!("{e}")

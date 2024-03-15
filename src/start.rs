@@ -7,10 +7,10 @@ use crate::api::*;
 use crate::api::cq_http::*;
 use crate::util::Config;
 
-pub async fn listen(cq_data: CqData<'_>, config: &Config) {
+pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
     let use_group = config.use_group.unwrap();
     let sender = cq_data.sender.unwrap().user_id;
-    let msg = cq_data.raw_message.unwrap_or("".to_string());
+    // let msg = cq_data.raw_message.unwrap_or("".to_string());
     let group_id = cq_data.group_id;
     if let Some(group) = cq_data.group_id {
         if msg.contains("群公告") && msg.contains("开战40人匹配") && msg.contains("输赢") {
@@ -38,18 +38,27 @@ pub async fn listen(cq_data: CqData<'_>, config: &Config) {
             send_group_msg(group, "请查看私聊", sender.unwrap()).await;
             send_user_msg(sender.unwrap(), group_id, &format!("40时间 {result}")).await;
         }
-    } else {
+    }
+    if let Some(userid) = sender {
         if msg.eq("指令") {
-            send_user_msg(sender.unwrap(), group_id, "zl").await;
+            send_user_msg(userid, group_id, "zl").await;
         }
         if msg.contains("偏差时间#") {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
             let result = set_jin_time(None, Some(deviate_time)).await;
             if result > 0 {
-                send_user_msg(sender.unwrap(), group_id, "修改成功").await;
+                send_user_msg(userid, group_id, "修改成功").await;
             }
         }
+    }
+}
+
+pub async fn listen_request(cq_data: CqData<'_>, request_type: &str) {
+    let sender = cq_data.user_id;
+    if request_type.eq("friend") && cq_data.comment == Some("40时间") {
+        log_info!("{} 添加好友", &sender.unwrap());
+        set_friend_add_request(cq_data.flag.unwrap(), true).await;
     }
 }
 

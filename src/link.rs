@@ -26,10 +26,12 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
         if let Some(Ok(Message::Text(data))) = message.next().await {
             log_info!("WebSocket分片连接: {:?}", &data);
             let cq_data = serde_json::from_str::<CqData>(&data).unwrap_or(Default::default());
-            if let None = &cq_data.raw_message {
-                continue;
+            if let Some(raw_message) = &cq_data.raw_message {
+                start::listen(cq_data.clone(), raw_message.clone(), &config).await;
             }
-            start::listen(cq_data.clone(), &config).await;
+            if let Some(request_type) = cq_data.request_type {
+                start::listen_request(cq_data.clone(), request_type).await;
+            }
         } else {
             log_error!("收发线程中断");
             break;
