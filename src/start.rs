@@ -86,6 +86,7 @@ struct UpJinTime {
     id: i64,
     up_time: Option<String>,
     deviate_time: Option<i64>,
+    user: Option<String>,
 }
 
 async fn get_jin_time(user: i64) -> String {
@@ -116,6 +117,7 @@ async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64
         id: 1,
         up_time,
         deviate_time,
+        user: Option::from("1329997614".to_string()),
     };
     let response = Client::new().post(url)
         .json(&up).send().await;
