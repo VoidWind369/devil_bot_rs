@@ -58,7 +58,14 @@ pub async fn listen_request(cq_data: CqData<'_>, request_type: &str) {
     let sender = cq_data.user_id;
     if request_type.eq("friend") && cq_data.comment == Some("40时间") {
         log_info!("{} 添加好友", &sender.unwrap());
-        set_friend_add_request(cq_data.flag.unwrap(), true).await;
+        match cq_data.comment {
+            Some("40时间") => {
+                set_friend_add_request(cq_data.flag.unwrap(), true).await;
+            }
+            _ => {
+                set_friend_add_request(cq_data.flag.unwrap(), false).await;
+            }
+        }
     }
 }
 
