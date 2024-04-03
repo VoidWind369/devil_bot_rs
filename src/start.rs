@@ -19,8 +19,8 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
                 log_info!("prompt {}", &prompt);
                 let prompt_split = prompt
                     .trim_start_matches("[群公告]🌿")
-                    .split(" ～").collect::<Vec<&str>>();
-                let time = to_native_dt(prompt_split[0]);
+                    .split("～").collect::<Vec<&str>>();
+                let time = to_native_dt(prompt_split[0].trim_end());
                 let result = set_jin_time(Option::from(time.to_string()), None).await;
                 if result > 0 {
                     send_group_msg(use_group, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
