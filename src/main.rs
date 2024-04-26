@@ -1,4 +1,5 @@
-mod log;
+use void_log::*;
+
 mod start;
 mod api;
 mod link;

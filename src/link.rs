@@ -2,9 +2,10 @@ use futures_util::{stream::{SplitSink, SplitStream}, SinkExt, StreamExt};
 use serde_json::{json};
 use tokio::{net::TcpStream};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
-use crate::*;
+use void_log::*;
 use crate::api::cc_http::CcData;
 use crate::api::cq_http::CqData;
+use crate::start;
 use crate::util::Config;
 
 pub async fn conn() {

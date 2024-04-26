@@ -2,7 +2,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{log_error, log_info};
+use void_log::*;
 use crate::util::Config;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

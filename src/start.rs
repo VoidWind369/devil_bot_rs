@@ -3,7 +3,7 @@ use futures_util::AsyncReadExt;
 use reqwest::{Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::*;
+use void_log::*;
 use crate::api::*;
 use crate::api::cc_http::*;
 use crate::util::Config;
