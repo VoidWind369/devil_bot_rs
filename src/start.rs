@@ -5,83 +5,67 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use crate::*;
 use crate::api::*;
-use crate::api::cq_http::*;
+use crate::api::cc_http::*;
 use crate::util::Config;
 
-pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
+pub async fn listen(cc_body: CcDataBody, config: &Config) {
     let use_group = config.use_group.unwrap();
-    let sender = cq_data.sender.unwrap().user_id;
-    // let msg = cq_data.raw_message.unwrap_or("".to_string());
-    let group_id = cq_data.group_id;
+    let sender = cc_body.user.unwrap().id.unwrap();
+    let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
     // *******************群聊消息*******************
-    if let Some(group) = cq_data.group_id {
+    if let Some(group) = cc_body.channel.unwrap().id {
         if msg.eq("指令") {
-            send_group_msg(group, "CRAZY TEST", -1).await;
+            send_group_msg(&group, "CRAZY TEST", -1).await;
         }
         if msg.eq("时间") {
             set_xin().await;
             let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
-            send_group_msg(group, &text, -1).await;
+            send_group_msg(&group, &text, -1).await;
         }
         if msg.contains("涩图#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
             let text = format!("<img src='{}'/>", img_url);
-            send_group_msg(group, &text, -1).await;
+            send_group_msg(&group, &text, -1).await;
         }
         if msg.contains("查配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let img_url = format!("http://app.orgvoid.top/clan/{}", vec[1]);
             let text = format!("<img src='{}'/>", img_url);
-            send_group_msg(group, &text, -1).await;
+            send_group_msg(&group, &text, -1).await;
         }
     }
 
     // *******************私聊消息*******************
-    if let Some(userid) = sender {
-        // 更新#s盟#2024-01-01 10:00
-        if msg.contains("更新#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let time = vec[2].replace("：", ":");
-            let union_id = match vec[1] {
-                "zero" => 11,
-                "积分" => 21,
-                "鑫盟" => 41,
-                "g盟" => 52,
-                "g盟高配" => 53,
-                "fwa" => 81,
-                "s盟" => 100,
-                "都城" => 201,
-                _ => 0
-            };
-            let json = json!({
-                "id": union_id,
-                "time": time
-            });
-            log_info!("{json}");
-            let res = set_time(json).await;
-            log_info!("发信人 {:?}", &userid);
-            send_user_msg(userid, group_id, &res).await;
-        }
-    }
+    // if let Some(userid) = sender {
+    //     // 更新#s盟#2024-01-01 10:00
+    //     if msg.contains("更新#") {
+    //         let vec = msg.split("#").collect::<Vec<&str>>();
+    //         let time = vec[2].replace("：", ":");
+    //         let union_id = match vec[1] {
+    //             "zero" => 11,
+    //             "积分" => 21,
+    //             "鑫盟" => 41,
+    //             "g盟" => 52,
+    //             "g盟高配" => 53,
+    //             "fwa" => 81,
+    //             "s盟" => 100,
+    //             "都城" => 201,
+    //             _ => 0
+    //         };
+    //         let json = json!({
+    //             "id": union_id,
+    //             "time": time
+    //         });
+    //         log_info!("{json}");
+    //         let res = set_time(json).await;
+    //         log_info!("发信人 {:?}", &userid);
+    //         send_user_msg(userid, group_id, &res).await;
+    //     }
+    // }
 
     log_info!("{}", &msg);
-}
-
-pub async fn listen_request(cq_data: CqData<'_>, request_type: &str) {
-    let sender = cq_data.user_id;
-    if request_type.eq("friend") {
-        log_info!("添加好友 {}", &sender.unwrap());
-        match cq_data.comment {
-            Some("40时间") => {
-                set_friend_add_request(cq_data.flag.unwrap(), true).await;
-            }
-            _ => {
-                set_friend_add_request(cq_data.flag.unwrap(), false).await;
-            }
-        }
-    }
 }
 
 fn to_native_dt(time_str: &str) -> NaiveDateTime {
@@ -92,59 +76,6 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
         Err(e) => {
             log_warn!("Format Time Error {e}");
             Default::default()
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct UpJinTime {
-    id: i64,
-    up_time: Option<String>,
-    deviate_time: Option<i64>,
-    user: Option<String>,
-}
-
-async fn get_jin_time(user: i64) -> String {
-    let config = Config::get().await;
-    let url = format!("{}/get_time", config.server_url.unwrap());
-    let json = json!({
-        "id": 1,
-        "user": user.to_string()
-    });
-    let response = Client::new().post(url).json(&json).send().await;
-    match response {
-        Ok(re) => {
-            let res = re.json::<Value>().await.unwrap();
-            log_info!("Set Result {}", &res);
-            res["up_time"].as_str().unwrap_or("时间获取失败").to_string()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            "时间接口失败".to_string()
-        }
-    }
-}
-
-async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64 {
-    let config = Config::get().await;
-    let url = format!("{}/set_time", config.server_url.unwrap());
-    let up = UpJinTime {
-        id: 1,
-        up_time,
-        deviate_time,
-        user: Option::from("1329997614".to_string()),
-    };
-    let response = Client::new().post(url)
-        .json(&up).send().await;
-    match response {
-        Ok(re) => {
-            let res = re.text().await.unwrap();
-            log_info!("Set Result {}", &res);
-            res.parse::<i64>().unwrap()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            0
         }
     }
 }

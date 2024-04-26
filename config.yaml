@@ -1,5 +1,5 @@
-ws_url: ws://1.orgvoid.top:30001
-api_url: http://1.orgvoid.top:30000
-auth_token: 9502748c4504e155adb311a94c206e7357bfa00527bb2768a7a5c0e1a705c4cf
+ws_url: ws://1.orgvoid.top:5500/v1/events
+api_url: http://1.orgvoid.top:5500/v1
+auth_token: 820d1ebf907b72a55f15633347af1aaef6e185c8ca255cdb3ebcc8fa5af028b0
 use_group: 622678662
 server_url: http://1.orgvoid.top:50005

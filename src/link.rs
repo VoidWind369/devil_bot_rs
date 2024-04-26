@@ -3,11 +3,12 @@ use serde_json::{json};
 use tokio::{net::TcpStream};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
 use crate::*;
+use crate::api::cc_http::CcData;
 use crate::api::cq_http::CqData;
 use crate::util::Config;
 
 pub async fn conn() {
-    let config = util::Config::get().await;
+    let config = Config::get().await;
     // 创建一个websockets客户端连接
     let (client, _) = connect_async(config.ws_url.unwrap())
         .await
@@ -15,8 +16,8 @@ pub async fn conn() {
     let (mut socket, mut message) = client.split();
 
     let handle = handle(&mut message);
-    let _intent = intent(&mut socket);
-    tokio::join!(handle);
+    let intent = intent(&mut socket);
+    tokio::join!(handle, intent);
 }
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
@@ -24,13 +25,12 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
     let config = Config::get().await;
     loop {
         if let Some(Ok(Message::Text(data))) = message.next().await {
-            log_link!("WebSocket分片连接: {:?}", &data);
-            let cq_data = serde_json::from_str::<CqData>(&data).unwrap_or(Default::default());
-            if let Some(raw_message) = &cq_data.raw_message {
-                start::listen(cq_data.clone(), raw_message.clone(), &config).await;
-            }
-            if let Some(request_type) = cq_data.request_type {
-                start::listen_request(cq_data.clone(), request_type).await;
+            log_link!("WebSocket分片连接: {}", &data);
+            let cc_data = serde_json::from_str::<CcData>(&data).unwrap_or(Default::default());
+
+            if Some(0) == cc_data.op {
+                let body = cc_data.body.unwrap();
+                start::listen(body.clone(), &config).await;
             }
         } else {
             log_error!("收发线程中断");
@@ -40,8 +40,14 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
 }
 
 async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) {
+    let config = Config::get().await;
+    let token = config.auth_token.unwrap();
     log_info!("{}", "心跳线程loop");
-    let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(41250));
+    let op3 = json!({
+        "op": 3, "body": { "token": token }
+    });
+    socket.send(Message::text(op3.to_string())).await.unwrap();
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(10000));
     loop {
         interval.tick().await;
         // 创建一个ping消息
