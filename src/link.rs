@@ -26,7 +26,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
     let config = Config::get().await;
     loop {
         if let Some(Ok(Message::Text(data))) = message.next().await {
-            log_link!("WebSocket分片连接: {}", &data);
+            log_msg!("WebSocket分片连接: {}", &data);
             let cc_data = serde_json::from_str::<CcData>(&data).unwrap_or(Default::default());
 
             if Some(0) == cc_data.op {
