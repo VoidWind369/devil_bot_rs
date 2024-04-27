@@ -10,7 +10,7 @@ use crate::util::Config;
 
 pub async fn listen(cc_body: CcDataBody, config: &Config) {
     let use_group = config.use_group.unwrap();
-    let sender = cc_body.user.unwrap().id.unwrap();
+    let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
     // *******************群聊消息*******************
@@ -23,49 +23,46 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
             send_group_msg(&group, &text, -1).await;
         }
-        if msg.contains("涩图#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
-            let text = format!("<img src='{}'/>", img_url);
-            send_group_msg(&group, &text, -1).await;
-        }
         if msg.contains("查配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let img_url = format!("http://app.orgvoid.top/clan/{}", vec[1]);
             let text = format!("<img src='{}'/>", img_url);
             send_group_msg(&group, &text, -1).await;
         }
+        if msg.contains("更新#") {
+            let vec = msg.split("#").collect::<Vec<&str>>();
+            let time = vec[2].replace("：", ":");
+            let union_id = match vec[1] {
+                "zero" => 11,
+                "积分" => 21,
+                "鑫盟" => 41,
+                "g盟" => 52,
+                "g盟高配" => 53,
+                "fwa" => 81,
+                "s盟" => 100,
+                "都城" => 201,
+                _ => 0
+            };
+            let json = json!({
+                "id": union_id,
+                "time": time
+            });
+            log_info!("{json}");
+            let res = set_time(json).await;
+            log_info!("发信人：{sender}");
+            send_group_msg(&group, &res, -1).await;
+        }
+        // comfy ui
+        // if msg.contains("涩图#") {
+        //     let vec = msg.split("#").collect::<Vec<&str>>();
+        //     let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
+        //     // let img_url = get_comfy(vec[1].to_string()).await;
+        //     let text = format!("<img src='{}'/>", img_url);
+        //     send_group_msg(&group, &text, -1).await;
+        // }
     }
 
-    // *******************私聊消息*******************
-    // if let Some(userid) = sender {
-    //     // 更新#s盟#2024-01-01 10:00
-    //     if msg.contains("更新#") {
-    //         let vec = msg.split("#").collect::<Vec<&str>>();
-    //         let time = vec[2].replace("：", ":");
-    //         let union_id = match vec[1] {
-    //             "zero" => 11,
-    //             "积分" => 21,
-    //             "鑫盟" => 41,
-    //             "g盟" => 52,
-    //             "g盟高配" => 53,
-    //             "fwa" => 81,
-    //             "s盟" => 100,
-    //             "都城" => 201,
-    //             _ => 0
-    //         };
-    //         let json = json!({
-    //             "id": union_id,
-    //             "time": time
-    //         });
-    //         log_info!("{json}");
-    //         let res = set_time(json).await;
-    //         log_info!("发信人 {:?}", &userid);
-    //         send_user_msg(userid, group_id, &res).await;
-    //     }
-    // }
-
-    log_info!("{}", &msg);
+    log_info!("消息 {}", &msg);
 }
 
 fn to_native_dt(time_str: &str) -> NaiveDateTime {
