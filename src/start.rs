@@ -9,7 +9,7 @@ use crate::api::cc_http::*;
 use crate::util::Config;
 
 pub async fn listen(cc_body: CcDataBody, config: &Config) {
-    let use_group = config.use_group.unwrap();
+    let use_group = config.use_group.unwrap_or_default();
     let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
