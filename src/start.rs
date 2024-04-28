@@ -23,12 +23,6 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
             send_group_msg(&group, &text, -1).await;
         }
-        if msg.contains("查配置#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let img_url = format!("http://app.orgvoid.top/clan/{}", vec[1]);
-            let text = format!("<img src='{}'/>", img_url);
-            send_group_msg(&group, &text, -1).await;
-        }
         if msg.contains("更新#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let time = vec[2].replace("：", ":");
@@ -57,6 +51,12 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
         //     let vec = msg.split("#").collect::<Vec<&str>>();
         //     let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
         //     // let img_url = get_comfy(vec[1].to_string()).await;
+        //     let text = format!("<img src='{}'/>", img_url);
+        //     send_group_msg(&group, &text, -1).await;
+        // }
+        // if msg.contains("查配置#") {
+        //     let vec = msg.split("#").collect::<Vec<&str>>();
+        //     let img_url = format!("http://app.orgvoid.top/clan/{}", vec[1]);
         //     let text = format!("<img src='{}'/>", img_url);
         //     send_group_msg(&group, &text, -1).await;
         // }
