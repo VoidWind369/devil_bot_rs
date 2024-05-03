@@ -54,12 +54,18 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
         //     let text = format!("<img src='{}'/>", img_url);
         //     send_group_msg(&group, &text, -1).await;
         // }
-        // if msg.contains("查配置#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let img_url = format!("http://app.orgvoid.top/clan/{}", vec[1]);
-        //     let text = format!("<img src='{}'/>", img_url);
-        //     send_group_msg(&group, &text, -1).await;
-        // }
+        if msg.contains("查部落#") || msg.contains("部落配置#") {
+            let vec = msg.split("#").collect::<Vec<&str>>();
+            let img_url = format!("http://get.cocsnipe.top/coc_clan_img/{}", vec[1]);
+            let text = format!("<img src='{}'/>", img_url);
+            send_group_msg(&group, &text, -1).await;
+        }
+        if msg.contains("查玩家#") {
+            let vec = msg.split("#").collect::<Vec<&str>>();
+            let img_url = format!("http://get.cocsnipe.top/coc_player_img/{}", vec[1]);
+            let text = format!("<img src='{}'/>", img_url);
+            send_group_msg(&group, &text, -1).await;
+        }
     }
 
     log_info!("消息 {}", &msg);
