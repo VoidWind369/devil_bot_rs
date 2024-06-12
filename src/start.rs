@@ -23,7 +23,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
                 let time = to_native_dt(prompt_split[0].trim_end());
                 let result = set_jin_time(Option::from(time.to_string()), None).await;
                 if result > 0 {
-                    send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                    send_msg(SendMessageType::Group, cq_data.user_id, Some(use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
                 }
             }
         }
@@ -35,8 +35,12 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
         }
         if msg.eq("40时间") && (group == use_group || group == 622678662) {
             let result = get_jin_time(sender.unwrap()).await;
-            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请查看私聊", -1).await;
-            send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
+            let send_res = send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
+            if send_res.eq("ok") {
+                send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请查看私聊", -1).await;
+            } else {
+                send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请按公告说明添加机器人好友", -1).await;
+            }
         }
     }
     if let Some(userid) = sender {

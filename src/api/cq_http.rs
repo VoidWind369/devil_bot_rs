@@ -97,7 +97,7 @@ pub struct SendCqGroupMessageData {
     text: Option<String>,
 }
 
-pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group_id: Option<i64>, text: &str, at: i64) {
+pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group_id: Option<i64>, text: &str, at: i64) -> String {
     let config = Config::get().await;
     let url = format!("{}/send_msg", config.api_url.unwrap());
 
@@ -116,10 +116,14 @@ pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group
     let response = Client::new().post(url).json(&send).send().await;
     match response {
         Ok(re) => {
-            log_info!("SendResult {}", re.text().await.unwrap())
+            let res = re.json::<Value>().await.unwrap();
+            let status = res["status"].as_str().unwrap();
+            log_info!("SendResult {}", status);
+            status.to_string()
         }
         Err(e) => {
-            log_error!("SendError {e}")
+            log_error!("SendError {e}");
+            "err".to_string()
         }
     }
 }
