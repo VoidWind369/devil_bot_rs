@@ -1,8 +1,8 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
-use crate::{log_error, log_info};
+use crate::*;
 use crate::util::Config;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -61,9 +61,26 @@ pub struct CqDataMessageData {
 // 发送消息构造
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SendCqGroup {
-    user_id: Option<String>,
-    group_id: Option<String>,
+    user_id: Option<i64>,
+    group_id: Option<i64>,
     message: Vec<SendCqGroupMessage>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SendMessage {
+    message_type: SendMessageType,
+    user_id: Option<i64>,
+    group_id: Option<i64>,
+    message: Vec<SendCqGroupMessage>,
+    auto_escape: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SendMessageType {
+    Group,
+    #[default]
+    Private,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -80,6 +97,33 @@ pub struct SendCqGroupMessageData {
     text: Option<String>,
 }
 
+pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group_id: Option<i64>, text: &str, at: i64) {
+    let config = Config::get().await;
+    let url = format!("{}/send_msg", config.api_url.unwrap());
+
+    let message = match at {
+        -1 => vec![send_text(text)],
+        _ => vec![send_at(at), send_text(&format!(" {text}"))]
+    };
+    let send = SendMessage {
+        message_type,
+        user_id,
+        group_id,
+        message,
+        auto_escape: None,
+    };
+    log_info!("{:?}", &send);
+    let response = Client::new().post(url).json(&send).send().await;
+    match response {
+        Ok(re) => {
+            log_info!("SendResult {}", re.text().await.unwrap())
+        }
+        Err(e) => {
+            log_error!("SendError {e}")
+        }
+    }
+}
+
 pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
     let config = Config::get().await;
     let url = format!("{}/send_group_msg", config.api_url.unwrap());
@@ -90,7 +134,7 @@ pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
     };
     let send = SendCqGroup {
         user_id: None,
-        group_id: Option::from(group_id.to_string()),
+        group_id: Option::from(group_id),
         message,
     };
     log_info!("{:?}", &send);
@@ -112,12 +156,12 @@ pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
     let message = vec![send_text(text)];
     let send = match group_id {
         Some(id) => SendCqGroup {
-            user_id: Option::from(user_id.to_string()),
-            group_id: Option::from(id.to_string()),
+            user_id: Option::from(user_id),
+            group_id: Option::from(id),
             message,
         },
         None => SendCqGroup {
-            user_id: Option::from(user_id.to_string()),
+            user_id: Option::from(user_id),
             group_id: None,
             message,
         }
@@ -130,6 +174,28 @@ pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
         }
         Err(e) => {
             log_error!("{e}")
+        }
+    }
+}
+
+pub async fn get_group_member_info(group_id: i64, user_id: i64) -> Value {
+    let config = Config::get().await;
+    let url = format!("{}/get_group_member_info", config.api_url.unwrap());
+    let json = json!({
+        "group_id": group_id,
+        "user_id": user_id,
+        "no_cache": true
+    });
+    let response = Client::new().post(url).json(&json).send().await;
+    match response {
+        Ok(re) => {
+            let value = re.json::<Value>().await.unwrap_or_default();
+            log_info!("Group Member {}", value);
+            value
+        }
+        Err(e) => {
+            log_error!("{e}");
+            Default::default()
         }
     }
 }

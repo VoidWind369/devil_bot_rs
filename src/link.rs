@@ -7,7 +7,7 @@ use crate::api::cq_http::CqData;
 use crate::util::Config;
 
 pub async fn conn() {
-    let config = util::Config::get().await;
+    let config = Config::get().await;
     // 创建一个websockets客户端连接
     let (client, _) = connect_async(config.ws_url.unwrap())
         .await
