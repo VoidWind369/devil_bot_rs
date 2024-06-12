@@ -33,7 +33,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
         if msg.eq("指令") {
             send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "zl", -1).await;
         }
-        if msg.eq("40时间") && (group_id == Some(use_group) || group_id == Some(622678662)) {
+        if msg.eq("40时间") && (group == use_group || group == 622678662) {
             let result = get_jin_time(sender.unwrap()).await;
             send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请查看私聊", -1).await;
             send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
