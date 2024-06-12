@@ -23,20 +23,20 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
                 let time = to_native_dt(prompt_split[0].trim_end());
                 let result = set_jin_time(Option::from(time.to_string()), None).await;
                 if result > 0 {
-                    send_group_msg(use_group, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                    send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
                 }
             }
         }
         if msg.contains("艾特") {
-            send_group_msg(group, "嘎嘎", 0).await;
+            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "嘎嘎", 0).await;
         }
         if msg.eq("指令") {
-            send_user_msg(sender.unwrap(), group_id, "zl").await;
+            send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "zl", -1).await;
         }
         if msg.eq("40时间") && (group_id == Some(use_group) || group_id == Some(622678662)) {
             let result = get_jin_time(sender.unwrap()).await;
-            send_group_msg(group, "请查看私聊", sender.unwrap()).await;
-            send_user_msg(sender.unwrap(), group_id, &format!("40时间 {result}")).await;
+            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请查看私聊", -1).await;
+            send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
         }
     }
     if let Some(userid) = sender {
@@ -48,7 +48,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
             let result = set_jin_time(None, Some(deviate_time)).await;
             if result > 0 {
-                send_user_msg(userid, group_id, "修改成功").await;
+                send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
         }
     }
