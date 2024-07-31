@@ -105,6 +105,10 @@ pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group
         -1 => vec![send_text(text)],
         _ => vec![send_at(at), send_text(&format!(" {text}"))]
     };
+    let group_id = match message_type {
+        SendMessageType::Group => { group_id }
+        SendMessageType::Private => { None }
+    };
     let send = SendMessage {
         message_type,
         user_id,
