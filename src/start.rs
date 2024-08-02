@@ -1,12 +1,28 @@
 use chrono::{Datelike, Local, NaiveDateTime};
-use futures_util::AsyncReadExt;
 use reqwest::{Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use tokio::fs;
+use tokio::io::AsyncReadExt;
 use void_log::*;
 use crate::api::*;
 use crate::api::cc_http::*;
-use crate::util::Config;
+use crate::util::{AdSetting, Config};
+
+pub async fn ad_loop() {
+    let ad_setting = AdSetting::get().await;
+    let groups = &ad_setting.groups;
+
+    let ad_str = ad_setting.ad_file().await;
+
+    if ad_setting.send {
+        for group in groups {
+            let _time = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
+            send_group_msg(group, &ad_str, -1).await;
+        }
+    }
+    tokio::time::sleep(tokio::time::Duration::from_millis(ad_setting.time.unwrap_or_default() * 1000)).await;
+}
 
 pub async fn listen(cc_body: CcDataBody, config: &Config) {
     let use_group = config.use_group.unwrap_or_default();
@@ -18,48 +34,35 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
         if msg.eq("指令") {
             send_group_msg(&group, "CRAZY TEST", -1).await;
         }
-        if msg.eq("时间") {
-            //set_xin().await;
-            let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
-            send_group_msg(&group, &text, -1).await;
-        }
-        if msg.contains("更新#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let time = vec[2].replace("：", ":");
-            let union_id = match vec[1] {
-                "zero" => 11,
-                "积分" => 21,
-                "鑫盟" => 41,
-                "g盟" => 52,
-                "g盟高配" => 53,
-                "fwa" => 81,
-                "s盟" => 100,
-                "都城" => 201,
-                _ => 0
-            };
-            let json = json!({
-                "id": union_id,
-                "time": time
-            });
-            log_info!("{json}");
-            let res = set_time(json).await;
-            log_info!("发信人：{sender}");
-            send_group_msg(&group, &res, -1).await;
-        }
-        // comfy ui
-        // if msg.contains("涩图#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
-        //     // let img_url = get_comfy(vec[1].to_string()).await;
-        //     let text = format!("<img src='{}'/>", img_url);
-        //     send_group_msg(&group, &text, -1).await;
+
+        // if msg.eq("广告开关") {
+        //     let ad_setting = AdSetting::get().await;
+        //     let mut ad_set = ad_setting.clone();
+        //     match ad_set.send {
+        //         true => false,
+        //         false => true
+        //     };
+        //     ad_set.set().await;
         // }
+        //
+        // if msg.starts_with("添加群#") {
+        //     let vec = msg.split("#").collect::<Vec<&str>>();
+        //     let ad_setting = AdSetting::get().await;
+        //     let mut ad_set = ad_setting.clone();
+        //     if !ad_set.groups.contains(&vec[1].to_string()) {
+        //         ad_set.groups.push(vec[1].to_string());
+        //         log_info!("添加群号{:?}", &ad_setting);
+        //         ad_set.set().await;
+        //     };
+        // }
+
         if msg.contains("查部落#") || msg.contains("部落配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let img_url = format!("http://get.cocsnipe.top/coc_clan_img/{}", vec[1]);
             let text = format!("<img src='{}'/>", img_url);
             send_group_msg(&group, &text, -1).await;
         }
+
         if msg.contains("查玩家#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let img_url = format!("http://get.cocsnipe.top/coc_player_img/{}", vec[1]);
@@ -102,32 +105,4 @@ async fn set_time(json: Value) -> String {
         .await
         .unwrap();
     format!("{}", response.text().await.unwrap_or("没有更新".to_string()))
-}
-
-async fn set_xin() {
-    let response = Client::new()
-        .get("http://get.cocsnipe.top/setXm")
-        .send()
-        .await
-        .unwrap();
-    log_info!("鑫盟{}", response.text().await.unwrap_or("没有更新".to_string()))
-}
-
-async fn _get_aw_qdm() -> [String; 2] {
-    let response = Client::new()
-        .get("http://get.cocsnipe.top/aw")
-        .send().await.expect("getAwErr");
-    let res = response.json().await.unwrap();
-    log_info!("启动码{:?}", res);
-    res
-}
-
-fn _formal_fwa(string: String) -> String {
-    //FWA 开搜时间
-    //Saturday, January 20, 2024 8:40 AM
-    let binding = string.replace("FWA 开搜时间\n", "");
-    let time_str = binding.trim_start_matches(" ");
-    let binding = time_str.replace(',', "");
-    let vec = binding.split(" ").collect::<Vec<&str>>();
-    vec[0].parse().unwrap()
 }

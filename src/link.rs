@@ -18,7 +18,8 @@ pub async fn conn() {
 
     let handle = handle(&mut message);
     let intent = intent(&mut socket);
-    tokio::join!(handle, intent);
+    let ad_send = ad_send();
+    tokio::join!(handle, intent, ad_send);
 }
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
@@ -64,5 +65,14 @@ async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>
                 break;
             }
         };
+    }
+}
+
+async fn ad_send() {
+    let config = Config::get().await;
+    let token = config.auth_token.unwrap();
+    log_info!("{}", "广告线程loop");
+    loop {
+        start::ad_loop().await;
     }
 }

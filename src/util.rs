@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use tokio::io::AsyncReadExt;
+use tokio::fs;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use void_log::*;
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -29,9 +31,53 @@ pub struct Config {
 
 impl Config {
     pub async fn get() -> Self {
-        let mut yaml_file = tokio::fs::File::open("config.yaml").await.expect("read config error");
+        let mut yaml_file = fs::File::open("config.yaml").await.expect("read config error");
         let mut yaml_str = String::new();
         yaml_file.read_to_string(&mut yaml_str).await.expect("read str error");
-        serde_yaml::from_str::<Config>(yaml_str.as_str()).expect("config error")
+        serde_yml::from_str::<Self>(yaml_str.as_str()).expect("config error")
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AdSetting {
+    pub send: bool,
+    pub file: Option<String>,
+    pub time: Option<u64>,
+    pub groups: Vec<String>,
+}
+
+impl Default for AdSetting {
+    fn default() -> Self {
+        Self {
+            send: true,
+            file: Some("ad.void".to_string()),
+            time: Some(3600),
+            ..Default::default()
+        }
+    }
+}
+
+impl AdSetting {
+    pub async fn get() -> Self {
+        let mut yaml_file = fs::File::open("ad_setting.yaml").await.expect("read setting error");
+        let mut yaml_str = String::new();
+        yaml_file.read_to_string(&mut yaml_str).await.expect("read str error");
+        serde_yml::from_str::<Self>(yaml_str.as_str()).expect("setting error")
+    }
+
+    pub async fn set(&self) {
+        let mut yaml_file = fs::File::open("ad_setting.yaml").await.expect("read setting error");
+        // let mut writer = BufWriter::new(yaml_file);
+        log_info!("写入配置{:?}", &self);
+        yaml_file.write_all(&serde_yml::to_string(self).unwrap().as_bytes()).await.unwrap();
+        yaml_file.flush().await.unwrap();
+    }
+
+    pub async fn ad_file(&self) -> String {
+        let file = self.clone().file.unwrap_or_default();
+        let mut ad_file = fs::File::open(file).await.unwrap();
+        let mut ad_str = String::new();
+        ad_file.read_to_string(&mut ad_str).await.unwrap();
+        ad_str
     }
 }
