@@ -1,8 +1,7 @@
 use reqwest::Client;
-use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
+use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::api::cq_http::SendCqGroup;
 use void_log::*;
 use crate::util::Config;
 

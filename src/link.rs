@@ -4,7 +4,6 @@ use tokio::{net::TcpStream};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
 use void_log::*;
 use crate::api::cc_http::CcData;
-use crate::api::cq_http::CqData;
 use crate::start;
 use crate::util::Config;
 
@@ -69,8 +68,6 @@ async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>
 }
 
 async fn ad_send() {
-    let config = Config::get().await;
-    let token = config.auth_token.unwrap();
     log_info!("{}", "广告线程loop");
     loop {
         start::ad_loop().await;

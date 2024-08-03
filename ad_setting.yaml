@@ -1,4 +1,5 @@
 send: true
 file: ad.void
 time: 60
-groups: [607019221]
+groups:
+- '607019221'

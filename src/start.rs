@@ -1,11 +1,7 @@
 use chrono::{Datelike, Local, NaiveDateTime};
 use reqwest::{Client};
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tokio::fs;
-use tokio::io::AsyncReadExt;
 use void_log::*;
-use crate::api::*;
 use crate::api::cc_http::*;
 use crate::util::{AdSetting, Config};
 
@@ -26,7 +22,7 @@ pub async fn ad_loop() {
 
 pub async fn listen(cc_body: CcDataBody, config: &Config) {
     let use_group = config.use_group.unwrap_or_default();
-    let sender = cc_body.user.unwrap().id.unwrap_or_default();
+    // let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
     // *******************群聊消息*******************
@@ -35,26 +31,57 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             send_group_msg(&group, "CRAZY TEST", -1).await;
         }
 
-        // if msg.eq("广告开关") {
-        //     let ad_setting = AdSetting::get().await;
-        //     let mut ad_set = ad_setting.clone();
-        //     match ad_set.send {
-        //         true => false,
-        //         false => true
-        //     };
-        //     ad_set.set().await;
-        // }
-        //
-        // if msg.starts_with("添加群#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let ad_setting = AdSetting::get().await;
-        //     let mut ad_set = ad_setting.clone();
-        //     if !ad_set.groups.contains(&vec[1].to_string()) {
-        //         ad_set.groups.push(vec[1].to_string());
-        //         log_info!("添加群号{:?}", &ad_setting);
-        //         ad_set.set().await;
-        //     };
-        // }
+        if msg.eq("广告开关") && group.eq(&use_group.to_string()) {
+            let mut ad_setting = AdSetting::get().await;
+            ad_setting.send = match ad_setting.send {
+                true => {
+                    send_group_msg(&group, "已关闭", -1).await;
+                    false
+                }
+                false => {
+                    send_group_msg(&group, "已开启", -1).await;
+                    true
+                }
+            };
+            ad_setting.set().await;
+        }
+
+        if msg.eq("群列表") && group.eq(&use_group.to_string()) {
+            let ad_setting = AdSetting::get().await;
+            let mut str = String::from("【群列表】");
+            for group in ad_setting.groups {
+                str.push_str("\r* ");
+                str.push_str(&group);
+                str.push_str(" *");
+            }
+            send_group_msg(&group, &str, -1).await;
+        }
+
+        if msg.starts_with("添加群#") && group.eq(&use_group.to_string()) {
+            let vec = msg.split("#").collect::<Vec<&str>>();
+            let mut ad_setting = AdSetting::get().await;
+            if !ad_setting.groups.contains(vec[1]) {
+                ad_setting.groups.insert(vec[1].to_string());
+                log_info!("添加群号{:?}", &ad_setting);
+                ad_setting.set().await;
+                send_group_msg(&group, "添加成功", -1).await;
+            } else {
+                send_group_msg(&group, "重复添加", -1).await;
+            };
+        }
+
+        if msg.starts_with("删除群#") && group.eq(&use_group.to_string()) {
+            let vec = msg.split("#").collect::<Vec<&str>>();
+            let mut ad_setting = AdSetting::get().await;
+            if ad_setting.groups.contains(vec[1]) {
+                ad_setting.groups.remove(&vec[1].to_string());
+                log_info!("添加群号{:?}", &ad_setting);
+                ad_setting.set().await;
+                send_group_msg(&group, "删除成功", -1).await;
+            } else {
+                send_group_msg(&group, "没有该群号", -1).await;
+            };
+        }
 
         if msg.contains("查部落#") || msg.contains("部落配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();

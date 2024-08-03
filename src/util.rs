@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -43,7 +45,7 @@ pub struct AdSetting {
     pub send: bool,
     pub file: Option<String>,
     pub time: Option<u64>,
-    pub groups: Vec<String>,
+    pub groups: HashSet<String>,
 }
 
 impl Default for AdSetting {
@@ -52,7 +54,7 @@ impl Default for AdSetting {
             send: true,
             file: Some("ad.void".to_string()),
             time: Some(3600),
-            ..Default::default()
+            groups: Default::default(),
         }
     }
 }
@@ -66,11 +68,12 @@ impl AdSetting {
     }
 
     pub async fn set(&self) {
-        let mut yaml_file = fs::File::open("ad_setting.yaml").await.expect("read setting error");
+        let mut yaml_file = fs::File::create("ad_setting.yaml").await.expect("create setting error");
         // let mut writer = BufWriter::new(yaml_file);
-        log_info!("写入配置{:?}", &self);
-        yaml_file.write_all(&serde_yml::to_string(self).unwrap().as_bytes()).await.unwrap();
-        yaml_file.flush().await.unwrap();
+        let data = serde_yml::to_string(self).unwrap();
+        log_info!("写入配置{:?}", &data);
+        yaml_file.write_all(&data.as_bytes()).await.unwrap();
+        // yaml_file.flush().await.unwrap();
     }
 
     pub async fn ad_file(&self) -> String {
