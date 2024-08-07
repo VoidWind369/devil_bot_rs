@@ -8,14 +8,22 @@ use crate::util::{AdSetting, Config};
 pub async fn ad_loop() {
     let ad_setting = AdSetting::get().await;
     let groups = &ad_setting.groups;
+    let guild_list = get_guild_list("").await;
 
     let ad_str = ad_setting.ad_file().await;
 
     if ad_setting.send {
-        for group in groups {
-            let _time = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
-            send_group_msg(group, &ad_str, -1).await;
+        for group in guild_list.data {
+            let group_id = group.id.unwrap();
+            if groups.contains(&group_id) {
+                let _time = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
+                send_group_msg(&group_id, &ad_str, -1).await;
+            }
         }
+        // for group in groups {
+        //     let _time = Local::now().naive_local().format("%Y-%m-%d %H:%M:%S").to_string();
+        //     send_group_msg(group, &ad_str, -1).await;
+        // }
     }
     tokio::time::sleep(tokio::time::Duration::from_millis(ad_setting.time.unwrap_or_default() * 1000)).await;
 }
@@ -52,6 +60,17 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             for group in ad_setting.groups {
                 str.push_str("\r* ");
                 str.push_str(&group);
+                str.push_str(" *");
+            }
+            send_group_msg(&group, &str, -1).await;
+        }
+
+        if msg.eq("全部群列表") && group.eq(&use_group.to_string()) {
+            let guild_list = get_guild_list("").await;
+            let mut str = String::from("【全部群列表】");
+            for group in guild_list.data {
+                str.push_str("\r* ");
+                str.push_str(&group.id.unwrap());
                 str.push_str(" *");
             }
             send_group_msg(&group, &str, -1).await;

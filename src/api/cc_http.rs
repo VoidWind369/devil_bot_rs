@@ -34,6 +34,42 @@ pub struct CcDataBodyInfo {
     pub content: Option<String>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CcGuild {
+    pub data: Vec<CcGuildData>,
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CcGuildData {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub avatar: Option<String>,
+}
+
+pub async fn get_guild_list(next: &str) -> CcGuild {
+    let config = Config::get().await;
+    let url = format!("{}/guild.list", config.api_url.unwrap());
+
+    let send = json!({
+        "next": next
+    });
+    let token = format!("Bearer {}", config.auth_token.unwrap_or_default());
+    let mut headers = HeaderMap::new();
+    headers.append(AUTHORIZATION, HeaderValue::from_str(&token).unwrap());
+    log_info!("{:?}", &send);
+    let response = Client::new().post(url).headers(headers).json(&send).send().await;
+    match response {
+        Ok(re) => {
+            re.json::<CcGuild>().await.unwrap()
+        }
+        Err(e) => {
+            log_error!("{e}");
+            Default::default()
+        }
+    }
+}
+
 pub async fn send_group_msg(group_id: &str, text: &str, at: i64) {
     let config = Config::get().await;
     let url = format!("{}/message.create", config.api_url.unwrap());
