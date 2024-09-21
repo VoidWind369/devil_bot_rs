@@ -115,6 +115,12 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             let text = format!("<img src='{}'/>", img_url);
             send_group_msg(&group, &text, -1).await;
         }
+
+        if msg.eq("群成员") {
+            let list = get_guild_member_list(&group, "").await;
+            log_info!("群成员 {list:?}");
+            // send_group_msg(&group, s, -1).await;
+        }
     }
 
     log_info!("消息 {}", &msg);
