@@ -19,7 +19,7 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
             send_group_msg(&group, "CRAZY TEST", -1).await;
         }
         if msg.eq("时间") {
-            set_xin().await;
+            //set_xin().await;
             let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
             send_group_msg(&group, &text, -1).await;
         }
