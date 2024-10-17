@@ -23,7 +23,6 @@ pub async fn conn() {
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
     log_info!("{}", "收发线程loop");
-    let config = Config::get().await;
     loop {
         if let Some(Ok(Message::Text(data))) = message.next().await {
             log_msg!("WebSocket分片连接: {}", &data);
@@ -31,7 +30,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
 
             if Some(0) == cc_data.op {
                 let body = cc_data.body.unwrap();
-                start::listen(body.clone(), &config).await;
+                start::listen(body.clone()).await;
             }
         } else {
             log_error!("收发线程中断");
@@ -42,7 +41,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
 
 async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) {
     let config = Config::get().await;
-    let token = config.auth_token.unwrap();
+    let token = config.bot.unwrap().token;
     log_info!("{}", "心跳线程loop");
     let op3 = json!({
         "op": 3, "body": { "token": token }

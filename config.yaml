@@ -1,5 +1,8 @@
-ws_url: ws://1.orgvoid.top:5500/v1/events
-api_url: http://1.orgvoid.top:5500/v1
-auth_token: 820d1ebf907b72a55f15633347af1aaef6e185c8ca255cdb3ebcc8fa5af028b0
-use_group: 622678662
-server_url: http://1.orgvoid.top:50005
+bot:
+  ws: ws://1.orgvoid.top:5500/v1/events
+  url: http://1.orgvoid.top:5500/v1
+  token: 820d1ebf907b72a55f15633347af1aaef6e185c8ca255cdb3ebcc8fa5af028b0
+api:
+  url: http://get.cocsnipe.top/coc
+chat_use:
+  group: 622678662

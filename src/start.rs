@@ -1,15 +1,15 @@
-use chrono::{Datelike, Local, NaiveDateTime};
-use futures_util::AsyncReadExt;
-use reqwest::{Client};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use void_log::*;
-use crate::api::*;
 use crate::api::cc_http::*;
 use crate::util::Config;
+use chrono::{Datelike, Local, NaiveDateTime};
+use futures_util::AsyncReadExt;
+use reqwest::Client;
+use serde_json::{json, Value};
+use void_log::*;
 
-pub async fn listen(cc_body: CcDataBody, config: &Config) {
-    let use_group = config.use_group.unwrap_or_default();
+pub async fn listen(cc_body: CcDataBody) {
+    let config = Config::get().await;
+    let url = config.api.unwrap_or_default().url.unwrap_or_default();
+    // let use_group = config.chat_use.unwrap_or_default().group.unwrap_or_default();
     let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
@@ -20,7 +20,7 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
         }
         if msg.eq("时间") {
             //set_xin().await;
-            let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
+            let text = format!("<img src='{}/listTimeImg'/>", &url);
             send_group_msg(&group, &text, -1).await;
         }
         if msg.contains("更新#") {
@@ -42,7 +42,7 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
                 "time": time
             });
             log_info!("{json}");
-            let res = set_time(json).await;
+            let res = set_time(&url, json).await;
             log_info!("发信人：{sender}");
             send_group_msg(&group, &res, -1).await;
         }
@@ -56,14 +56,12 @@ pub async fn listen(cc_body: CcDataBody, config: &Config) {
         // }
         if msg.contains("查部落#") || msg.contains("部落配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
-            let img_url = format!("http://get.cocsnipe.top/coc_clan_img/{}", vec[1]);
-            let text = format!("<img src='{}'/>", img_url);
+            let text = format!("<img src='{}/coc/coc_clan_img/{}'/>", &url, vec[1]);
             send_group_msg(&group, &text, -1).await;
         }
         if msg.contains("查玩家#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
-            let img_url = format!("http://get.cocsnipe.top/coc_player_img/{}", vec[1]);
-            let text = format!("<img src='{}'/>", img_url);
+            let text = format!("<img src='{}/coc/coc_player_img/{}'/>", &url, vec[1]);
             send_group_msg(&group, &text, -1).await;
         }
     }
@@ -94,9 +92,9 @@ async fn get_comfy(text: String) -> String {
     res
 }
 
-async fn set_time(json: Value) -> String {
+async fn set_time(url: &str, json: Value) -> String {
     let response = Client::new()
-        .post("http://get.cocsnipe.top/setTime")
+        .post(format!("{url}/setTime"))
         .json(&json)
         .send()
         .await
@@ -105,21 +103,14 @@ async fn set_time(json: Value) -> String {
 }
 
 async fn set_xin() {
+    let config = Config::get().await;
+    let url = config.api.unwrap_or_default().url.unwrap_or_default();
     let response = Client::new()
-        .get("http://get.cocsnipe.top/setXm")
+        .get(format!("{url}/setXm"))
         .send()
         .await
         .unwrap();
     log_info!("鑫盟{}", response.text().await.unwrap_or("没有更新".to_string()))
-}
-
-async fn _get_aw_qdm() -> [String; 2] {
-    let response = Client::new()
-        .get("http://get.cocsnipe.top/aw")
-        .send().await.expect("getAwErr");
-    let res = response.json().await.unwrap();
-    log_info!("启动码{:?}", res);
-    res
 }
 
 fn _formal_fwa(string: String) -> String {
