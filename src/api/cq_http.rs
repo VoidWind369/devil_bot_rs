@@ -81,7 +81,7 @@ pub struct SendCqGroupMessageData {
 }
 
 pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
-    let api = Config::get().await.api.unwrap_or_default();
+    let api = Config::get().await.bot.unwrap_or_default();
     let url = format!("{}/send_group_msg", &api.url.unwrap());
 
     let message = match at {
@@ -106,7 +106,7 @@ pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
 }
 
 pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
-    let api = Config::get().await.api.unwrap_or_default();
+    let api = Config::get().await.bot.unwrap_or_default();
     let url = format!("{}/send_private_msg", &api.url.unwrap());
 
     let message = vec![send_text(text)];
@@ -135,7 +135,7 @@ pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
 }
 
 pub async fn set_friend_add_request(flag: &str, approve: bool) {
-    let api = Config::get().await.api.unwrap_or_default();
+    let api = Config::get().await.bot.unwrap_or_default();
     let url = format!("{}/set_friend_add_request", &api.url.unwrap());
     let json = json!({
         "flag": flag,

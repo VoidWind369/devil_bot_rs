@@ -36,7 +36,7 @@ pub struct CcDataBodyInfo {
 }
 
 pub async fn send_group_msg(group_id: &str, text: &str, at: i64) {
-    let api = Config::get().await.api.unwrap_or_default();
+    let api = Config::get().await.bot.unwrap_or_default();
     let url = format!("{}/message.create", &api.url.unwrap());
 
     let message = match at {
