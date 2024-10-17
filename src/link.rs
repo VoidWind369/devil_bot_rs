@@ -9,9 +9,9 @@ use crate::start;
 use crate::util::Config;
 
 pub async fn conn() {
-    let config = Config::get().await;
+    let bot = Config::get().await.bot.unwrap_or_default();
     // 创建一个websockets客户端连接
-    let (client, _) = connect_async(config.ws_url.unwrap())
+    let (client, _) = connect_async(bot.ws.unwrap_or_default())
         .await
         .expect("连接问题");
     let (mut socket, mut message) = client.split();

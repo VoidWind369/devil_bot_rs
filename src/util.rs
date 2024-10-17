@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncReadExt;
 
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub server_port: Option<i64>,
     // database
