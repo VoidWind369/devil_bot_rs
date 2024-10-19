@@ -56,12 +56,12 @@ pub async fn listen(cc_body: CcDataBody) {
         // }
         if msg.contains("查部落#") || msg.contains("部落配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
-            let text = format!("<img src='{}/coc/coc_clan_img/{}'/>", &url, vec[1]);
+            let text = format!("<img src='{}/coc/clan_img/{}'/>", &url, vec[1]);
             send_group_msg(&group, &text, -1).await;
         }
         if msg.contains("查玩家#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
-            let text = format!("<img src='{}/coc/coc_player_img/{}'/>", &url, vec[1]);
+            let text = format!("<img src='{}/coc/player_img/{}'/>", &url, vec[1]);
             send_group_msg(&group, &text, -1).await;
         }
     }
