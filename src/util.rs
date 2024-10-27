@@ -1,30 +1,46 @@
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncReadExt;
 
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub server_port: Option<i64>,
     // database
-    pub database_url: Option<String>,
-    pub database_name: Option<String>,
-    pub database_username: Option<String>,
-    pub database_password: Option<String>,
-    // redis
-    pub redis_url: Option<String>,
-    pub redis_username: Option<String>,
-    pub redis_password: Option<String>,
-    pub redis_expire: Option<i64>,
+    pub database: Option<ConfigDatabase>,
+    pub redis: Option<ConfigRedis>,
     // request
-    pub ws_url: Option<String>,
-    pub api_url: Option<String>,
-    pub auth_token: Option<String>,
+    pub bot: Option<ConfigApi>,
+    pub api: Option<ConfigApi>,
     // QQ Bot
-    pub qq_num: Option<String>,
-    pub appid: Option<String>,
+    pub chat_use: Option<ConfigChatUse>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct ConfigDatabase {
+    pub url: Option<String>,
+    pub name: Option<String>,
+    pub username: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct ConfigRedis {
+    pub url: Option<String>,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub expire: Option<i64>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct ConfigApi {
+    pub ws: Option<String>,
+    pub url: Option<String>,
     pub token: Option<String>,
-    pub app_secret: Option<String>,
-    pub use_group: Option<i64>,
-    pub server_url: Option<String>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct ConfigChatUse {
+    pub user: Option<Vec<i64>>,
+    pub group: Option<Vec<i64>>,
 }
 
 impl Config {
@@ -32,6 +48,6 @@ impl Config {
         let mut yaml_file = tokio::fs::File::open("config.yaml").await.expect("read config error");
         let mut yaml_str = String::new();
         yaml_file.read_to_string(&mut yaml_str).await.expect("read str error");
-        serde_yaml::from_str::<Config>(yaml_str.as_str()).expect("config error")
+        serde_yml::from_str::<Config>(yaml_str.as_str()).expect("config error")
     }
 }

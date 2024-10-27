@@ -7,8 +7,8 @@ use crate::api::*;
 use crate::api::cq_http::*;
 use crate::util::Config;
 
-pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
-    let use_group = config.use_group.unwrap();
+pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
+    let use_groups = config.chat_use.unwrap().group.unwrap_or_default();
     let sender = cq_data.sender.unwrap().user_id;
     // let msg = cq_data.raw_message.unwrap_or("".to_string());
     let group_id = cq_data.group_id;
@@ -23,7 +23,9 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
                 let time = to_native_dt(prompt_split[0].trim_end());
                 let result = set_jin_time(Option::from(time.to_string()), None).await;
                 if result > 0 {
-                    send_msg(SendMessageType::Group, cq_data.user_id, Some(use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                    for use_group in &use_groups {
+                        send_msg(SendMessageType::Group, cq_data.user_id, Some(*use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                    }
                 }
             }
         }
@@ -33,7 +35,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
         if msg.eq("指令") {
             send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "zl", -1).await;
         }
-        if msg.eq("40时间") && (group == use_group || group == 622678662) {
+        if msg.eq("40时间") && (use_groups.contains(&group) || group == 622678662) {
             let result = get_jin_time(sender.unwrap()).await;
             let send_res = send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
             if send_res.eq("ok") {
@@ -46,6 +48,16 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: &Config) {
     if let Some(userid) = sender {
         if msg.eq("指令") {
             send_user_msg(userid, group_id, "zl").await;
+        }
+        if msg.starts_with("发布时间#") {
+            let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00:00");
+            let time = to_native_dt(time_str);
+            let result = set_jin_time(Option::from(time.to_string()), None).await;
+            if result > 0 {
+                for use_group in &use_groups {
+                    send_msg(SendMessageType::Group, cq_data.user_id, Some(*use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
+                }
+            }
         }
         if msg.contains("偏差时间#") {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
@@ -95,7 +107,7 @@ struct UpJinTime {
 
 async fn get_jin_time(user: i64) -> String {
     let config = Config::get().await;
-    let url = format!("{}/get_time", config.server_url.unwrap());
+    let url = format!("{}/get_time", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 1,
         "user": user.to_string()
@@ -116,7 +128,7 @@ async fn get_jin_time(user: i64) -> String {
 
 async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64 {
     let config = Config::get().await;
-    let url = format!("{}/set_time", config.server_url.unwrap());
+    let url = format!("{}/set_time", config.api.unwrap().url.unwrap());
     let up = UpJinTime {
         id: 1,
         up_time,
@@ -138,123 +150,6 @@ async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64
     }
 }
 
-// pub async fn listen_msg(events_body: EventsBody, config: &Config) {
-//     log_info!("群聊消息");
-//     let Some(channel) = events_body.channel else { panic!("NONE") };
-//     let Some(message) = events_body.message else { panic!("NONE") };
-//     let Some(user) = events_body.user else { panic!("NONE") };
-//
-//     log_info!("{:?}", &message.content);
-//     if Some("指令".to_string()).eq(&message.content) {
-//         let res = send_message(&channel.id, "CRAZY TEST", config).await;
-//         log_info!("{res}")
-//     }
-//
-//     if Some("时间".to_string()).eq(&message.content) {
-//         set_xin().await;
-//         let text = "<img src=\"http://get.cocsnipe.top/listTimeImg\"/>";
-//         let res = send_message(&channel.id, &text, config).await;
-//         log_info!("{res}")
-//     }
-//
-//     // if Some("艾特".to_string()).eq(&message.content) {
-//     //     let sender = Some(format!("{}", user.id.clone().unwrap()));
-//     //     let text = "<at id=\"all\" name=\"全体成员\"/> 嘎嘎";
-//     //     let res = send_message(&channel.id, &text, config).await;
-//     //     log_info!("{res}")
-//     // }
-//
-//     if message.clone().content.unwrap_or("".to_string()).contains("涩图#") {
-//         if let Some(msg) = &message.content {
-//             let vec = msg.split("#").collect::<Vec<&str>>();
-//
-//             let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
-//             let text = format!("<img src='{}'/>", img_url);
-//             let res = send_message(&channel.id, &text, config).await;
-//             log_info!("{res}")
-//         }
-//     }
-//
-//     // if Some("私聊".to_string()).eq(&message.content) {
-//     //     let sender = Some(format!("private:{}", user.id.clone().unwrap()));
-//     //     let text = "撩骚";
-//     //     let res = send_message(&sender, &text, config).await;
-//     //     log_info!("{res}")
-//     // }
-//
-//     // if message.clone().content.unwrap_or("".to_string()).contains("查配置#") {
-//     //     if let Some(msg) = &message.content {
-//     //         let vec = msg.split("#").collect::<Vec<&str>>();
-//     //
-//     //         let img_url = format!("http://app.orgvoid.top/clan/{}",vec[1]);
-//     //         let text = format!("<img src='{}'/>", img_url);
-//     //         let res = send_message(&channel.id, &text, config).await;
-//     //         log_info!("{res}")
-//     //     }
-//     // }
-//
-//     // if Some("爱玩".to_string()).eq(&message.content) || Some("启动码".to_string()).eq(&message.content) {
-//     //     let qdm = get_aw_qdm().await;
-//     //     let mut text = String::new();
-//     //     text.push_str("启动码: ");
-//     //     text.push_str(&qdm[0]);
-//     //     text.push_str("\r\n下次刷新: ");
-//     //     text.push_str(&qdm[1]);
-//     //     let res = send_message(&channel.id, &text, config).await;
-//     //     log_info!("{res}")
-//     // }
-// }
-
-// pub async fn listen_user_msg(events_body: EventsBody, config: &Config) {
-//     log_info!("私信消息");
-//     let Some(channel) = events_body.channel else { panic!("NONE") };
-//     let Some(message) = events_body.message else { panic!("NONE") };
-//
-//     // if Some("私聊".to_string()).eq(&message.content) {
-//     //     let text = "撩骚";
-//     //     let res = send_message(&channel.id, &text, config).await;
-//     // }
-//     // 更新#s盟#2024-01-01 10:00
-//     if message.clone().content.unwrap_or("".to_string()).contains("更新#") {
-//         if let Some(msg) = message.content {
-//             let vec = msg.split("#").collect::<Vec<&str>>();
-//             let time = vec[2].replace("：", ":");
-//             let union_id = match vec[1] {
-//                 "zero" => 11,
-//                 "积分" => 21,
-//                 "鑫盟" => 41,
-//                 "g盟" => 52,
-//                 "g盟高配" => 53,
-//                 "fwa" => 81,
-//                 "s盟" => 100,
-//                 "都城" => 201,
-//                 _ => 0
-//             };
-//             let json = json!({
-//                 "id": union_id,
-//                 "time": time
-//             });
-//             log_info!("{json}");
-//
-//             set_time(json).await;
-//         }
-//         log_info!("发信人 {:?}", &channel.id);
-//         let text = "Updating";
-//         log_info!("{res}")
-//     }
-// }
-
-async fn _get_comfy(text: String) -> String {
-    let url = "http://127.0.0.1:50000/get_comfy";
-    let json = json!({
-        "prompt": text
-    });
-    let response = Client::new().post(url).json(&json).send().await.unwrap();
-    log_info!("{:?}{:?}",response.status(), response.headers());
-    let res = response.json::<String>().await.unwrap();
-    res
-}
-
 async fn _set_time(json: Value) {
     let response = Client::new()
         .post("http://get.cocsnipe.top/setTime")
@@ -263,32 +158,4 @@ async fn _set_time(json: Value) {
         .await
         .unwrap();
     log_info!("{}", response.text().await.unwrap_or("没有更新".to_string()))
-}
-
-async fn _set_xin() {
-    let response = Client::new()
-        .get("http://get.cocsnipe.top/setXm")
-        .send()
-        .await
-        .unwrap();
-    log_info!("鑫盟{}", response.text().await.unwrap_or("没有更新".to_string()))
-}
-
-async fn _get_aw_qdm() -> [String; 2] {
-    let response = Client::new()
-        .get("http://get.cocsnipe.top/aw")
-        .send().await.expect("getAwErr");
-    let res = response.json().await.unwrap();
-    log_info!("启动码{:?}", res);
-    res
-}
-
-fn _formal_fwa(string: String) -> String {
-    //FWA 开搜时间
-    //Saturday, January 20, 2024 8:40 AM
-    let binding = string.replace("FWA 开搜时间\n", "");
-    let time_str = binding.trim_start_matches(" ");
-    let binding = time_str.replace(',', "");
-    let vec = binding.split(" ").collect::<Vec<&str>>();
-    vec[0].parse().unwrap()
 }

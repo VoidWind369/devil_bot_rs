@@ -99,7 +99,7 @@ pub struct SendCqGroupMessageData {
 
 pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group_id: Option<i64>, text: &str, at: i64) -> String {
     let config = Config::get().await;
-    let url = format!("{}/send_msg", config.api_url.unwrap());
+    let url = format!("{}/send_msg", config.bot.unwrap().url.unwrap());
 
     let message = match at {
         -1 => vec![send_text(text)],
@@ -132,9 +132,9 @@ pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group
     }
 }
 
-pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
+pub async fn _send_group_msg(group_id: i64, text: &str, at: i64) {
     let config = Config::get().await;
-    let url = format!("{}/send_group_msg", config.api_url.unwrap());
+    let url = format!("{}/send_group_msg", config.bot.unwrap().url.unwrap());
 
     let message = match at {
         -1 => vec![send_text(text)],
@@ -159,7 +159,7 @@ pub async fn send_group_msg(group_id: i64, text: &str, at: i64) {
 
 pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
     let config = Config::get().await;
-    let url = format!("{}/send_private_msg", config.api_url.unwrap());
+    let url = format!("{}/send_private_msg", config.bot.unwrap().url.unwrap());
 
     let message = vec![send_text(text)];
     let send = match group_id {
@@ -186,9 +186,9 @@ pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
     }
 }
 
-pub async fn get_group_member_info(group_id: i64, user_id: i64) -> Value {
+pub async fn _get_group_member_info(group_id: i64, user_id: i64) -> Value {
     let config = Config::get().await;
-    let url = format!("{}/get_group_member_info", config.api_url.unwrap());
+    let url = format!("{}/get_group_member_info", config.bot.unwrap().url.unwrap());
     let json = json!({
         "group_id": group_id,
         "user_id": user_id,
@@ -210,7 +210,7 @@ pub async fn get_group_member_info(group_id: i64, user_id: i64) -> Value {
 
 pub async fn set_friend_add_request(flag: &str, approve: bool) {
     let config = Config::get().await;
-    let url = format!("{}/set_friend_add_request", config.api_url.unwrap());
+    let url = format!("{}/set_friend_add_request", config.bot.unwrap().url.unwrap());
     let json = json!({
         "flag": flag,
         "approve": approve,

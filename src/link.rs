@@ -9,7 +9,7 @@ use crate::util::Config;
 pub async fn conn() {
     let config = Config::get().await;
     // 创建一个websockets客户端连接
-    let (client, _) = connect_async(config.ws_url.unwrap())
+    let (client, _) = connect_async(config.bot.unwrap().ws.unwrap())
         .await
         .expect("连接问题");
     let (mut socket, mut message) = client.split();
@@ -27,7 +27,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
             log_link!("WebSocket分片连接: {:?}", &data);
             let cq_data = serde_json::from_str::<CqData>(&data).unwrap_or(Default::default());
             if let Some(raw_message) = &cq_data.raw_message {
-                start::listen(cq_data.clone(), raw_message.clone(), &config).await;
+                start::listen(cq_data.clone(), raw_message.clone(), config.clone()).await;
             }
             if let Some(request_type) = cq_data.request_type {
                 start::listen_request(cq_data.clone(), request_type).await;
