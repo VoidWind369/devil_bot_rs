@@ -34,8 +34,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         }
         if msg.eq("指令") {
             let mut text = String::from("指令");
-            text.push_str("\n发布时间#1970-10-01 08:00");
-            text.push_str("\n偏差时间#<number>");
+            text.push_str("\n40时间");
             send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &text, -1).await;
         }
         if msg.eq("40时间") && (use_groups.contains(&group) || group == 622678662) {
@@ -50,7 +49,10 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
     }
     if let Some(userid) = sender {
         if msg.eq("指令") {
-            send_user_msg(userid, group_id, "zl").await;
+            let mut text = String::from("指令");
+            text.push_str("\n发布时间#1970-10-01 08:00");
+            text.push_str("\n偏差时间#<number>");
+            send_user_msg(userid, group_id, &text).await;
         }
         if msg.starts_with("发布时间#") {
             let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00");
