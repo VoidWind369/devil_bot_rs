@@ -35,7 +35,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         if msg.eq("指令") {
             let mut text = String::from("指令");
             text.push_str("\n40时间");
-            send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &text, -1).await;
+            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, &text, -1).await;
         }
         if msg.eq("40时间") && (use_groups.contains(&group) || group == 622678662) {
             let result = get_jin_time(sender.unwrap()).await;
