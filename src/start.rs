@@ -1,11 +1,11 @@
+use crate::api::cq_http::*;
+use crate::api::*;
+use crate::util::Config;
+use crate::*;
 use chrono::{Datelike, Local, NaiveDateTime};
-use reqwest::{Client};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::*;
-use crate::api::*;
-use crate::api::cq_http::*;
-use crate::util::Config;
 
 pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
     let use_groups = config.chat_use.unwrap().group.unwrap_or_default();
@@ -50,9 +50,16 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             send_user_msg(userid, group_id, "zl").await;
         }
         if msg.starts_with("发布时间#") {
-            let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00:00");
-            let time = to_native_dt(time_str);
-            let result = set_jin_time(Option::from(time.to_string()), None).await;
+            let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00");
+            log_info!("提取时间 {time_str}");
+            let result = match NaiveDateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M") {
+                Ok(parse) => {
+                    set_jin_time(Option::from(parse.to_string()), None).await
+                }
+                Err(_) => {
+                    0
+                }
+            };
             if result > 0 {
                 for use_group in &use_groups {
                     send_msg(SendMessageType::Group, cq_data.user_id, Some(*use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
