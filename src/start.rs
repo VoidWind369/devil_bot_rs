@@ -1,3 +1,4 @@
+use std::ops::Add;
 use crate::api::cq_http::*;
 use crate::api::*;
 use crate::util::Config;
@@ -30,9 +31,12 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             }
         }
         if msg.contains("艾特") {
-            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "嘎嘎", 0).await;
+            send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "有事没事艾特一下", 0).await;
         }
         if msg.eq("指令") {
+            let mut text = String::from("指令");
+            text.push_str("\n发布时间#1970-10-01 08:00");
+            text.push_str("\n偏差时间#<number>");
             send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "zl", -1).await;
         }
         if msg.eq("40时间") && (use_groups.contains(&group) || group == 622678662) {
