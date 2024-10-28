@@ -157,7 +157,7 @@ pub async fn _send_group_msg(group_id: i64, text: &str, at: i64) {
     }
 }
 
-pub async fn send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
+pub async fn _send_user_msg(user_id: i64, group_id: Option<i64>, text: &str) {
     let config = Config::get().await;
     let url = format!("{}/send_private_msg", config.bot.unwrap().url.unwrap());
 

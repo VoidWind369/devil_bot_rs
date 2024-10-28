@@ -73,6 +73,15 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 }
             }
         }
+        if msg.contains("更新成员#") && use_user.contains(&userid) {
+            let split = msg.split("#").collect::<Vec<&str>>();
+            let user = *split.get(1).unwrap();
+            let view = split.get(2).unwrap().parse::<i64>().unwrap();
+            let result = set_user_view(user, view).await;
+            if result > 0 {
+                send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
+            }
+        }
         if msg.contains("偏差时间#") && use_user.contains(&userid) {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
@@ -155,6 +164,27 @@ async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64
         Ok(re) => {
             let res = re.text().await.unwrap();
             log_info!("Set Result {}", &res);
+            res.parse::<i64>().unwrap()
+        }
+        Err(e) => {
+            log_warn!("Not Res {}", e);
+            0
+        }
+    }
+}
+
+async fn set_user_view(user: &str, view: i64) -> i64 {
+    let config = Config::get().await;
+    let url = format!("{}/set_user_view", config.api.unwrap().url.unwrap());
+    let json = json!({
+        "id": 0,
+        "user": user,
+        "view": view
+    });
+    match Client::new().post(url).json(&json).send().await {
+        Ok(re) => {
+            let res = re.text().await.unwrap();
+            log_info!("Set User {}", &res);
             res.parse::<i64>().unwrap()
         }
         Err(e) => {
