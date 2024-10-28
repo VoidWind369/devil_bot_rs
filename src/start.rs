@@ -23,7 +23,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                     .trim_start_matches("[群公告]🌿")
                     .split("～").collect::<Vec<&str>>();
                 let time = to_native_dt(prompt_split[0].trim_end());
-                let result = set_jin_time(Option::from(time.to_string()), None).await;
+                let result = set_jin_time(Option::from(time.to_string()), None, Some(1329997614.to_string())).await;
                 if result > 0 {
                     for use_group in &use_groups {
                         send_msg(SendMessageType::Group, cq_data.user_id, Some(*use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
@@ -40,7 +40,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, &text, -1).await;
         }
         if msg.eq("40时间") && (use_groups.contains(&group) || group == 622678662) {
-            let result = get_jin_time(sender.unwrap()).await;
+            let result = get_jin_time(sender.unwrap(), group).await;
             let send_res = send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, &format!("40时间 {result}"), -1).await;
             if send_res.eq("ok") {
                 send_msg(SendMessageType::Group, cq_data.user_id, cq_data.group_id, "请查看私聊", -1).await;
@@ -62,7 +62,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             log_info!("提取时间 {time_str}");
             let result = match NaiveDateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M") {
                 Ok(parse) => {
-                    set_jin_time(Option::from(parse.to_string()), None).await
+                    set_jin_time(Option::from(parse.to_string()), None, Some(userid.to_string())).await
                 }
                 Err(_) => {
                     0
@@ -86,7 +86,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         if msg.contains("偏差时间#") && use_user.contains(&userid) {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
-            let result = set_jin_time(None, Some(deviate_time)).await;
+            let result = set_jin_time(None, Some(deviate_time), Some(userid.to_string())).await;
             if result > 0 {
                 send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
@@ -129,19 +129,27 @@ struct UpJinTime {
     user: Option<String>,
 }
 
-async fn get_jin_time(user: i64) -> String {
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct JinApi {
+    status: i64,
+    message: String,
+    data: Value,
+}
+
+async fn get_jin_time(user: i64, group: i64) -> String {
     let config = Config::get().await;
     let url = format!("{}/get_time", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 1,
-        "user": user.to_string()
+        "user": user.to_string(),
+        "group": group.to_string(),
     });
     let response = Client::new().post(url).json(&json).send().await;
     match response {
         Ok(re) => {
-            let res = re.json::<Value>().await.unwrap();
+            let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set Result {}", &res);
-            res["up_time"].as_str().unwrap_or("时间获取失败").to_string()
+            res.data["up_time"].as_str().unwrap_or("时间获取失败").to_string()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
@@ -150,22 +158,22 @@ async fn get_jin_time(user: i64) -> String {
     }
 }
 
-async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>) -> i64 {
+async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, user: Option<String>) -> i64 {
     let config = Config::get().await;
     let url = format!("{}/set_time", config.api.unwrap().url.unwrap());
     let up = UpJinTime {
         id: 1,
         up_time,
         deviate_time,
-        user: Option::from("1329997614".to_string()),
+        user,
     };
     let response = Client::new().post(url)
         .json(&up).send().await;
     match response {
         Ok(re) => {
-            let res = re.text().await.unwrap();
+            let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set Result {}", &res);
-            res.parse::<i64>().unwrap()
+            res.data.parse::<i64>().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
@@ -184,9 +192,9 @@ async fn set_user_view(user: &str, view: i64) -> i64 {
     });
     match Client::new().post(url).json(&json).send().await {
         Ok(re) => {
-            let res = re.text().await.unwrap();
+            let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set User {}", &res);
-            res.parse::<i64>().unwrap()
+            res.data.parse::<i64>().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
