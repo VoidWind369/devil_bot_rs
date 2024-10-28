@@ -54,6 +54,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
+            text.push_str("\n更新成员#<qq_number>#<number>");
             send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
         if msg.starts_with("发布时间#") && use_user.contains(&userid) {
@@ -178,7 +179,7 @@ async fn set_user_view(user: &str, view: i64) -> i64 {
     let url = format!("{}/set_user_view", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 0,
-        "user": user,
+        "name": user,
         "view": view
     });
     match Client::new().post(url).json(&json).send().await {
