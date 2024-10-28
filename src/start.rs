@@ -148,7 +148,7 @@ async fn get_jin_time(user: i64, group: i64) -> String {
     match response {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set Result {}", &res);
+            log_info!("Set Result {}", &res.message);
             res.data["up_time"].as_str().unwrap_or("时间获取失败").to_string()
         }
         Err(e) => {
