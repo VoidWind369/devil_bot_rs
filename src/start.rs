@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
-    let use_groups = config.chat_use.unwrap().group.unwrap_or_default();
+    let chat_use = config.chat_use.unwrap();
+    let use_groups = chat_use.group.unwrap_or_default();
+    let use_user = chat_use.user.unwrap_or_default();
     let sender = cq_data.sender.unwrap().user_id;
     // let msg = cq_data.raw_message.unwrap_or("".to_string());
     let group_id = cq_data.group_id;
@@ -48,13 +50,13 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         }
     }
     if let Some(userid) = sender {
-        if msg.eq("指令") && cq_data.group_id == None {
+        if msg.eq("指令") && cq_data.group_id == None && use_user.contains(&userid) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
             send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
-        if msg.starts_with("发布时间#") {
+        if msg.starts_with("发布时间#") && use_user.contains(&userid) {
             let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00");
             log_info!("提取时间 {time_str}");
             let result = match NaiveDateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M") {
@@ -71,7 +73,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 }
             }
         }
-        if msg.contains("偏差时间#") {
+        if msg.contains("偏差时间#") && use_user.contains(&userid) {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
             let result = set_jin_time(None, Some(deviate_time)).await;
