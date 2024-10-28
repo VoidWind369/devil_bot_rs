@@ -48,11 +48,11 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         }
     }
     if let Some(userid) = sender {
-        if msg.eq("指令") {
+        if msg.eq("指令") && cq_data.group_id == None {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
-            send_user_msg(userid, group_id, &text).await;
+            send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
         if msg.starts_with("发布时间#") {
             let time_str = msg.split('#').last().unwrap_or("2024-10-01 00:00");
