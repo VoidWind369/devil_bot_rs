@@ -172,8 +172,8 @@ async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, user: 
     match response {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set Result {}", &res);
-            res.data.parse::<i64>().unwrap()
+            log_info!("Set Result {}", &res.message);
+            res.data.as_i64().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
@@ -193,8 +193,8 @@ async fn set_user_view(user: &str, view: i64) -> i64 {
     match Client::new().post(url).json(&json).send().await {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set User {}", &res);
-            res.data.parse::<i64>().unwrap()
+            log_info!("Set User {}", &res.message);
+            res.data.as_i64().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
