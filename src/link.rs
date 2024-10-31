@@ -24,8 +24,9 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
     let config = Config::get().await;
     loop {
         if let Some(Ok(Message::Text(data))) = message.next().await {
-            log_link!("WebSocket分片连接: {:?}", &data);
-            let cq_data = serde_json::from_str::<CqData>(&data).unwrap_or(Default::default());
+            let data = data.replace("\\", "");
+            let cq_data = serde_json::from_str::<CqData>(&data).expect("解析报文失败");
+            log_link!("WebSocket分片连接: {:?}", &cq_data);
             if let Some(raw_message) = &cq_data.raw_message {
                 start::listen(cq_data.clone(), raw_message.clone(), config.clone()).await;
             }
