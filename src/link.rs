@@ -1,12 +1,11 @@
-use futures_util::{stream::{SplitSink, SplitStream}, SinkExt, StreamExt};
-use serde_json::{json};
-use tokio::{net::TcpStream};
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
-use void_log::*;
 use crate::api::cc_http::CcData;
-use crate::api::cq_http::CqData;
 use crate::start;
 use crate::util::Config;
+use futures_util::{stream::{SplitSink, SplitStream}, SinkExt, StreamExt};
+use serde_json::json;
+use tokio::net::TcpStream;
+use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use void_log::*;
 
 pub async fn conn() {
     let bot = Config::get().await.bot.unwrap_or_default();
