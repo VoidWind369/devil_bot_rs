@@ -83,7 +83,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             let split = msg.split("#").collect::<Vec<&str>>();
             let user = *split.get(1).unwrap();
 
-            let result = if let Ok(view) = split.get(2).unwrap().parse::<i64>() {
+            let result = if let Ok(view) = split.get(2).unwrap_or(&"0").parse::<i64>() {
                 set_user_view(user, view).await
             } else {
                 let type_id = match split.get(2) {
