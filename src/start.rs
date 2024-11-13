@@ -54,6 +54,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
+            text.push_str("\n成员列表/群列表");
             text.push_str("\n更新成员#<qq_number>#<number/type>");
             text.push_str("\n更新成员type参数：");
             text.push_str("\n  白名单");
