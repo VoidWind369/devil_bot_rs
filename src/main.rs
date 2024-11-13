@@ -15,7 +15,9 @@ async fn main() {
 
     log_info!("登录中....");
 
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(5000));
     loop {
         link::conn().await;
+        interval.tick().await;
     }
 }

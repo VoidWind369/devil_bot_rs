@@ -54,7 +54,12 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
-            text.push_str("\n更新成员#<qq_number>#<number>");
+            text.push_str("\n更新成员#<qq_number>#<number/type>");
+            text.push_str("\n更新成员type参数：");
+            text.push_str("\n  白名单");
+            text.push_str("\n  内部群");
+            text.push_str("\n  外部群");
+            text.push_str("\n  黑名单");
             send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
         if msg.starts_with("发布时间#") && use_user.contains(&userid) {
@@ -77,8 +82,19 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         if msg.contains("更新成员#") && use_user.contains(&userid) {
             let split = msg.split("#").collect::<Vec<&str>>();
             let user = *split.get(1).unwrap();
-            let view = split.get(2).unwrap().parse::<i64>().unwrap();
-            let result = set_user_view(user, view).await;
+
+            let result = if let Ok(view) = split.get(2).unwrap().parse::<i64>() {
+                set_user_view(user, view).await
+            } else {
+                let type_id = match split.get(2) {
+                    Some(&"白名单") => 2,
+                    Some(&"内部群") => 4,
+                    Some(&"外部群") => 5,
+                    Some(&"黑名单") => 9,
+                    _ => -1
+                };
+                set_user_type(user, type_id).await
+            };
             if result > 0 {
                 send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
@@ -91,6 +107,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
         }
+        if msg.contains("") {}
     }
 }
 
@@ -193,7 +210,32 @@ async fn set_user_view(user: &str, view: i64) -> i64 {
     match Client::new().post(url).json(&json).send().await {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set User {}", &res.message);
+            log_info!("Set UserView {}", &res.message);
+            res.data.as_i64().unwrap()
+        }
+        Err(e) => {
+            log_warn!("Not Res {}", e);
+            0
+        }
+    }
+}
+
+async fn set_user_type(user: &str, user_type: i64) -> i64 {
+    //小于0跳过
+    if user_type < 0 {
+        return 0;
+    }
+    let config = Config::get().await;
+    let url = format!("{}/set_user_type", config.api.unwrap().url.unwrap());
+    let json = json!({
+        "id": 0,
+        "name": user,
+        "user_type": user_type
+    });
+    match Client::new().post(url).json(&json).send().await {
+        Ok(re) => {
+            let res = re.json::<JinApi>().await.unwrap();
+            log_info!("Set UserType {}", &res.message);
             res.data.as_i64().unwrap()
         }
         Err(e) => {
