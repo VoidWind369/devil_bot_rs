@@ -1,7 +1,7 @@
 bot:
-  ws: ws://1.orgvoid.top:5500/v1/events
-  url: http://1.orgvoid.top:5500/v1
-  token: 988772dbe2bb54e46905a0d6dc07e3fe51c5f1c2cb6f45bb66294cfa71933488
+  ws: ws://119.91.53.206:5500/v1/events
+  url: http://119.91.53.206:5500/v1
+  token: f29b0eb8767082b01e702474ea3284e1373a50ee12ab58543dd2278e01f64acd
 api:
   url: http://get.cocsnipe.top/coc
 chat_use:

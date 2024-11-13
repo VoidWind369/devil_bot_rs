@@ -16,35 +16,8 @@ pub async fn listen(cc_body: CcDataBody) {
     // *******************群聊消息*******************
     if let Some(group) = cc_body.channel.unwrap().id {
         if msg.eq("指令") {
-            send_group_msg(&group, "CRAZY TEST", -1).await;
-        }
-        if msg.eq("时间") {
-            //set_xin().await;
-            let text = format!("<img src='{}/listTimeImg'/>", &url);
-            send_group_msg(&group, &text, -1).await;
-        }
-        if msg.contains("更新#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let time = vec[2].replace("：", ":");
-            let union_id = match vec[1] {
-                "zero" => 11,
-                "积分" => 21,
-                "鑫盟" => 41,
-                "g盟" => 52,
-                "g盟高配" => 53,
-                "fwa" => 81,
-                "s盟" => 100,
-                "都城" => 201,
-                _ => 0
-            };
-            let json = json!({
-                "id": union_id,
-                "time": time
-            });
-            log_info!("{json}");
-            let res = set_time(&url, json).await;
-            log_info!("发信人：{sender}");
-            send_group_msg(&group, &res, -1).await;
+            let api = zn_api().await;
+            send_group_msg(&group, &api, -1).await;
         }
         // comfy ui
         // if msg.contains("涩图#") {
@@ -54,16 +27,16 @@ pub async fn listen(cc_body: CcDataBody) {
         //     let text = format!("<img src='{}'/>", img_url);
         //     send_group_msg(&group, &text, -1).await;
         // }
-        if msg.contains("查部落#") || msg.contains("部落配置#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let text = format!("<img src='{}/coc/clan_img/{}'/>", &url, vec[1]);
-            send_group_msg(&group, &text, -1).await;
-        }
-        if msg.contains("查玩家#") {
-            let vec = msg.split("#").collect::<Vec<&str>>();
-            let text = format!("<img src='{}/coc/player_img/{}'/>", &url, vec[1]);
-            send_group_msg(&group, &text, -1).await;
-        }
+        // if msg.contains("查部落#") || msg.contains("部落配置#") {
+        //     let vec = msg.split("#").collect::<Vec<&str>>();
+        //     let text = format!("<img src='{}/coc/clan_img/{}'/>", &url, vec[1]);
+        //     send_group_msg(&group, &text, -1).await;
+        // }
+        // if msg.contains("查玩家#") {
+        //     let vec = msg.split("#").collect::<Vec<&str>>();
+        //     let text = format!("<img src='{}/coc/player_img/{}'/>", &url, vec[1]);
+        //     send_group_msg(&group, &text, -1).await;
+        // }
     }
 
     log_info!("消息 {}", &msg);
@@ -79,6 +52,15 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
             Default::default()
         }
     }
+}
+
+async fn zn_api() -> String {
+    let url = "https://whyta.cn/api/tx/zhanan?key=cc8cba0a7069";
+    let client = Client::new()
+        .get(url).send().await.unwrap();
+    let value = client.json::<Value>().await.unwrap();
+    log_info!("{:?}", value);
+    value["result"]["content"].as_str().unwrap().to_string()
 }
 
 async fn get_comfy(text: String) -> String {
