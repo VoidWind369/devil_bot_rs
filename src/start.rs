@@ -79,6 +79,34 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 }
             }
         }
+        if msg.eq("成员列表") && use_user.contains(&userid) {
+            let users = get_users(userid, 2).await;
+            let black_users = get_users(userid, 9).await;
+            let mut text = String::from("成员列表");
+            for user in users {
+                let word = format!("\n{} | 偏差 {} | 白名单", user.name.unwrap(), user.view.unwrap());
+                text.push_str(&word);
+            }
+            for user in black_users {
+                let word = format!("\n{} | 偏差 {} | 黑名单", user.name.unwrap(), user.view.unwrap());
+                text.push_str(&word);
+            }
+            send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
+        }
+        if msg.eq("群列表") && use_user.contains(&userid) {
+            let groups = get_users(userid, 4).await;
+            let out_groups = get_users(userid, 5).await;
+            let mut text = String::from("群列表");
+            for group in groups {
+                let word = format!("\n{} | 偏差 {} | 内部群", group.name.unwrap(), group.view.unwrap());
+                text.push_str(&word);
+            }
+            for group in out_groups {
+                let word = format!("\n{} | 偏差 {} | 外部群", group.name.unwrap(), group.view.unwrap());
+                text.push_str(&word);
+            }
+            send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
+        }
         if msg.contains("更新成员#") && use_user.contains(&userid) {
             let split = msg.split("#").collect::<Vec<&str>>();
             let user = *split.get(1).unwrap();
@@ -107,7 +135,6 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
         }
-        if msg.contains("") {}
     }
 }
 
@@ -150,7 +177,16 @@ struct UpJinTime {
 struct JinApi {
     status: i64,
     message: String,
-    data: Value,
+    data: Option<Value>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UserModel {
+    pub id: Option<i64>,
+    pub name: Option<String>,
+    pub user_type: Option<i64>,
+    pub status: Option<i64>,
+    pub view: Option<i64>,
 }
 
 async fn get_jin_time(user: i64, group: i64) -> String {
@@ -166,7 +202,7 @@ async fn get_jin_time(user: i64, group: i64) -> String {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set Result {}", &res.message);
-            res.data["up_time"].as_str().unwrap_or("时间获取失败").to_string()
+            res.data.unwrap()["up_time"].as_str().unwrap_or("时间获取失败").to_string()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
@@ -190,11 +226,46 @@ async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, user: 
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set Result {}", &res.message);
-            res.data.as_i64().unwrap()
+            res.data.unwrap().as_i64().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
             0
+        }
+    }
+}
+
+///
+///
+/// # Arguments
+///
+/// * `user`: 操作用户
+/// * `user_type`: 要查看的权限组
+///
+/// returns: i64
+///
+/// # Examples
+///
+/// ```
+///
+/// ```
+async fn get_users(user: i64, user_type: i64) -> Vec<UserModel> {
+    let config = Config::get().await;
+    let url = format!("{}/get_users", config.api.unwrap().url.unwrap());
+    let json = json!({
+        "id": 0,
+        "name": user.to_string(),
+        "user_type": user_type
+    });
+    match Client::new().post(url).json(&json).send().await {
+        Ok(re) => {
+            let res = re.json::<JinApi>().await.unwrap();
+            log_info!("Get Users {}", &res.message);
+            serde_json::from_value(res.data.unwrap()).unwrap()
+        }
+        Err(e) => {
+            log_warn!("Not Res {}", e);
+            vec![]
         }
     }
 }
@@ -211,7 +282,7 @@ async fn set_user_view(user: &str, view: i64) -> i64 {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set UserView {}", &res.message);
-            res.data.as_i64().unwrap()
+            res.data.unwrap().as_i64().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
@@ -236,7 +307,7 @@ async fn set_user_type(user: &str, user_type: i64) -> i64 {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set UserType {}", &res.message);
-            res.data.as_i64().unwrap()
+            res.data.unwrap().as_i64().unwrap()
         }
         Err(e) => {
             log_warn!("Not Res {}", e);
