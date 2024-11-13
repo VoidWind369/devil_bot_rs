@@ -55,7 +55,7 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
 }
 
 async fn zn_api() -> String {
-    let url = "https://whyta.cn/api/tx/zhanan?key=cc8cba0a7069";
+    let url = "https://whyta.cn/api/tx/tiangou?key=cc8cba0a7069";
     let client = Client::new()
         .get(url).send().await.unwrap();
     let value = client.json::<Value>().await.unwrap();
