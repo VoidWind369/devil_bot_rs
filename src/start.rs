@@ -8,10 +8,6 @@ use serde_json::{json, Value};
 use void_log::*;
 
 pub async fn listen(cc_body: CcDataBody) {
-    // let config = Config::get().await;
-    // let url = config.api.unwrap_or_default().url.unwrap_or_default();
-    // let use_group = config.chat_use.unwrap_or_default().group.unwrap_or_default();
-    // let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
     // *******************群聊消息*******************
@@ -48,7 +44,7 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
 }
 
 async fn zn_api() -> String {
-    let url = "https://whyta.cn/api/tx/tiangou?key=cc8cba0a7069";
+    let url = "https://whyta.cn/api/tx/saylove?key=cc8cba0a7069";
     let client = Client::new()
         .get(url).send().await.unwrap();
     let value = client.json::<Value>().await.unwrap();
