@@ -108,7 +108,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             }
             send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
-        if msg.contains("更新成员#") && use_user.contains(&userid) {
+        if msg.starts_with("更新成员#") && use_user.contains(&userid) {
             let split = msg.split("#").collect::<Vec<&str>>();
             let user = *split.get(1).unwrap();
 
@@ -128,7 +128,21 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                 send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
             }
         }
-        if msg.contains("偏差时间#") && use_user.contains(&userid) {
+        if msg.starts_with("批量更新成员#") {
+            let split = msg.split("#").collect::<Vec<&str>>();
+            let users = split.get(1).unwrap();
+            let mut result = 0;
+            if let Ok(view) = split.get(2).unwrap_or(&"0").parse::<i64>() {
+                let mut users = users.trim_end_matches(",").split(",");
+                while let Some(user) = users.next() {
+                    result += set_user_view(user, view).await
+                }
+            };
+            if result > 0 {
+                send_msg(SendMessageType::Private, cq_data.user_id, cq_data.group_id, "修改成功", -1).await;
+            };
+        }
+        if msg.starts_with("偏差时间#") && use_user.contains(&userid) {
             let deviate_time = msg.split("#").collect::<Vec<&str>>();
             let deviate_time = deviate_time[1].parse::<i64>().unwrap();
             let result = set_jin_time(None, Some(deviate_time), Some(userid.to_string())).await;
