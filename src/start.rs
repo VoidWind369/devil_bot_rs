@@ -2,15 +2,16 @@ use crate::api::cc_http::*;
 use crate::util::Config;
 use chrono::{Datelike, Local, NaiveDateTime};
 use futures_util::AsyncReadExt;
+use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
 use void_log::*;
 
 pub async fn listen(cc_body: CcDataBody) {
-    let config = Config::get().await;
-    let url = config.api.unwrap_or_default().url.unwrap_or_default();
+    // let config = Config::get().await;
+    // let url = config.api.unwrap_or_default().url.unwrap_or_default();
     // let use_group = config.chat_use.unwrap_or_default().group.unwrap_or_default();
-    let sender = cc_body.user.unwrap().id.unwrap_or_default();
+    // let sender = cc_body.user.unwrap().id.unwrap_or_default();
     let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
 
     // *******************群聊消息*******************
@@ -18,25 +19,17 @@ pub async fn listen(cc_body: CcDataBody) {
         if msg.eq("指令") {
             let api = zn_api().await;
             send_group_msg(&group, &api, -1).await;
+        } else {
+            let mut rng = rand::thread_rng();
+            let y = rng.gen_range(0.00..1000.00);
+
+            if y > 980.00 {
+                let api = zn_api().await;
+                send_group_msg(&group, &api, -1).await;
+            }
+
+            log_info!("{y}")
         }
-        // comfy ui
-        // if msg.contains("涩图#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let img_url = get_comfy(vec[1].to_string()).await.replace("127.0.0.1:8188", "1.orgvoid.top:50009");
-        //     // let img_url = get_comfy(vec[1].to_string()).await;
-        //     let text = format!("<img src='{}'/>", img_url);
-        //     send_group_msg(&group, &text, -1).await;
-        // }
-        // if msg.contains("查部落#") || msg.contains("部落配置#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let text = format!("<img src='{}/coc/clan_img/{}'/>", &url, vec[1]);
-        //     send_group_msg(&group, &text, -1).await;
-        // }
-        // if msg.contains("查玩家#") {
-        //     let vec = msg.split("#").collect::<Vec<&str>>();
-        //     let text = format!("<img src='{}/coc/player_img/{}'/>", &url, vec[1]);
-        //     send_group_msg(&group, &text, -1).await;
-        // }
     }
 
     log_info!("消息 {}", &msg);
