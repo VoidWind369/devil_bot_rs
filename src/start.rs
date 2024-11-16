@@ -130,7 +130,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         }
         if msg.starts_with("批量更新成员#") {
             let split = msg.split("#").collect::<Vec<&str>>();
-            let users = split.get(1).unwrap();
+            let users = split.get(1).unwrap().replace("，", ",");
             let mut result = 0;
             if let Ok(view) = split.get(2).unwrap_or(&"0").parse::<i64>() {
                 let mut users = users.trim_end_matches(",").split(",");
