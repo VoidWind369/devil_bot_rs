@@ -1,18 +1,15 @@
 use crate::api::cq_http::*;
 use crate::api::*;
 use crate::util::Config;
-use crate::*;
-use chrono::{Datelike, Local, NaiveDateTime};
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use chrono::NaiveDateTime;
+use void_log::log_info;
+use crate::tool::{get_jin_time, get_users, set_jin_time, set_user_type, set_user_view, to_native_dt};
 
 pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
     let chat_use = config.chat_use.unwrap();
     let use_groups = chat_use.group.unwrap_or_default();
     let use_user = chat_use.user.unwrap_or_default();
     let sender = cq_data.sender.unwrap().user_id;
-    // let msg = cq_data.raw_message.unwrap_or("".to_string());
     let group_id = cq_data.group_id;
     if let Some(group) = cq_data.group_id {
         if msg.contains("群公告") && msg.contains("开战40人匹配") && msg.contains("输赢") {
@@ -55,7 +52,8 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
             text.push_str("\n成员列表/群列表");
-            text.push_str("\n更新成员#<qq_number>#<number/type>");
+            text.push_str("\n更新成员#<qq>#<number/type>");
+            text.push_str("\n批量更新成员#<qq1,qq2>#<number>");
             text.push_str("\n更新成员type参数：");
             text.push_str("\n  白名单");
             text.push_str("\n  内部群");
@@ -166,177 +164,4 @@ pub async fn listen_request(cq_data: CqData<'_>, request_type: &str) {
             }
         }
     }
-}
-
-fn to_native_dt(time_str: &str) -> NaiveDateTime {
-    let full_str = format!("{}-{time_str}", Local::now().year());
-    let fmt = "%Y-%m月%d号 %H:%M";
-    match NaiveDateTime::parse_from_str(&full_str, fmt) {
-        Ok(ndt) => { ndt }
-        Err(e) => {
-            log_warn!("Format Time Error {e}");
-            Default::default()
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct UpJinTime {
-    id: i64,
-    up_time: Option<String>,
-    deviate_time: Option<i64>,
-    user: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct JinApi {
-    status: i64,
-    message: String,
-    data: Option<Value>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct UserModel {
-    pub id: Option<i64>,
-    pub name: Option<String>,
-    pub user_type: Option<i64>,
-    pub status: Option<i64>,
-    pub view: Option<i64>,
-}
-
-async fn get_jin_time(user: i64, group: i64) -> String {
-    let config = Config::get().await;
-    let url = format!("{}/get_time", config.api.unwrap().url.unwrap());
-    let json = json!({
-        "id": 1,
-        "user": user.to_string(),
-        "group": group.to_string(),
-    });
-    let response = Client::new().post(url).json(&json).send().await;
-    match response {
-        Ok(re) => {
-            let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set Result {}", &res.message);
-            res.data.unwrap()["up_time"].as_str().unwrap_or("时间获取失败").to_string()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            "时间接口失败".to_string()
-        }
-    }
-}
-
-async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, user: Option<String>) -> i64 {
-    let config = Config::get().await;
-    let url = format!("{}/set_time", config.api.unwrap().url.unwrap());
-    let up = UpJinTime {
-        id: 1,
-        up_time,
-        deviate_time,
-        user,
-    };
-    let response = Client::new().post(url)
-        .json(&up).send().await;
-    match response {
-        Ok(re) => {
-            let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set Result {}", &res.message);
-            res.data.unwrap().as_i64().unwrap()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            0
-        }
-    }
-}
-
-///
-///
-/// # Arguments
-///
-/// * `user`: 操作用户
-/// * `user_type`: 要查看的权限组
-///
-/// returns: i64
-///
-/// # Examples
-///
-/// ```
-///
-/// ```
-async fn get_users(user: i64, user_type: i64) -> Vec<UserModel> {
-    let config = Config::get().await;
-    let url = format!("{}/get_users", config.api.unwrap().url.unwrap());
-    let json = json!({
-        "id": 0,
-        "name": user.to_string(),
-        "user_type": user_type
-    });
-    match Client::new().post(url).json(&json).send().await {
-        Ok(re) => {
-            let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Get Users {}", &res.message);
-            serde_json::from_value(res.data.unwrap()).unwrap()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            vec![]
-        }
-    }
-}
-
-async fn set_user_view(user: &str, view: i64) -> i64 {
-    let config = Config::get().await;
-    let url = format!("{}/set_user_view", config.api.unwrap().url.unwrap());
-    let json = json!({
-        "id": 0,
-        "name": user,
-        "view": view
-    });
-    match Client::new().post(url).json(&json).send().await {
-        Ok(re) => {
-            let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set UserView {}", &res.message);
-            res.data.unwrap().as_i64().unwrap()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            0
-        }
-    }
-}
-
-async fn set_user_type(user: &str, user_type: i64) -> i64 {
-    //小于0跳过
-    if user_type < 0 {
-        return 0;
-    }
-    let config = Config::get().await;
-    let url = format!("{}/set_user_type", config.api.unwrap().url.unwrap());
-    let json = json!({
-        "id": 0,
-        "name": user,
-        "user_type": user_type
-    });
-    match Client::new().post(url).json(&json).send().await {
-        Ok(re) => {
-            let res = re.json::<JinApi>().await.unwrap();
-            log_info!("Set UserType {}", &res.message);
-            res.data.unwrap().as_i64().unwrap()
-        }
-        Err(e) => {
-            log_warn!("Not Res {}", e);
-            0
-        }
-    }
-}
-
-async fn _set_time(json: Value) {
-    let response = Client::new()
-        .post("http://get.cocsnipe.top/setTime")
-        .json(&json)
-        .send()
-        .await
-        .unwrap();
-    log_info!("{}", response.text().await.unwrap_or("没有更新".to_string()))
 }

@@ -1,8 +1,10 @@
-mod log;
+use void_log::{log_error, log_info, log_link, log_warn};
+
 mod start;
 mod api;
 mod link;
 mod util;
+mod tool;
 
 #[tokio::main]
 async fn main() {

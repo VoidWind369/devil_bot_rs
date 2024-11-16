@@ -18,3 +18,4 @@ reqwest = { version = "0.12.8", features = ["multipart", "stream", "json", "rust
 rand = "0.8.5"
 chrono = "0.4.38"
 urlencoding = "2.1.3"
+void_log = { git = "https://gitee.com/orange_union/void_log.git" }
