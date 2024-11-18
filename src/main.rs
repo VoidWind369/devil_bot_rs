@@ -1,4 +1,4 @@
-use void_log::{log_error, log_info, log_link, log_warn};
+use void_log::{log_error, log_info};
 
 mod start;
 mod api;
