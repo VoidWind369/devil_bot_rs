@@ -10,7 +10,7 @@ use crate::util::Config;
 pub async fn conn() {
     let config = Config::get().await;
     // 创建一个websockets客户端连接
-    if let Ok((client, _))=connect_async(config.bot.unwrap().ws.unwrap()).await {
+    if let Ok((client, _)) = connect_async(config.bot.unwrap().ws.unwrap()).await {
         let (mut socket, mut message) = client.split();
         let handle = handle(&mut message);
         let _intent = intent(&mut socket);
@@ -24,13 +24,21 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
     while let Some(Ok(Message::Text(data))) = message.next().await {
         // 修复符号导致json解析失败
         let data = data.replace("\\", "");
-        let cq_data = serde_json::from_str::<CqData>(&data).expect("解析报文失败");
-        log_link!("WebSocket分片连接: {:?}", &cq_data);
-        if let Some(raw_message) = &cq_data.raw_message {
-            start::listen(cq_data.clone(), raw_message.clone(), config.clone()).await;
-        }
-        if let Some(request_type) = cq_data.request_type {
-            start::listen_request(cq_data.clone(), request_type).await;
+        match serde_json::from_str::<CqData>(&data) {
+            Ok(cq_data) => {
+                log_link!("WebSocket分片连接: {:?}", &cq_data);
+                if let Some(raw_message) = &cq_data.raw_message {
+                    start::listen(cq_data.clone(), raw_message.clone(), config.clone()).await;
+                }
+                if let Some(request_type) = cq_data.request_type {
+                    start::listen_request(cq_data.clone(), request_type).await;
+                }
+            },
+
+            Err(e) => {
+                log_error!("解析报文失败: {}", e);
+                log_link!("WebSocket Json: {}", &data);
+            }
         }
     }
     log_error!("收发线程中断");
