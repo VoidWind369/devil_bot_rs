@@ -50,15 +50,12 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
         if msg.eq("指令") && cq_data.group_id == None && use_user.contains(&userid) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
-            text.push_str("\n偏差时间#<number>");
+            text.push_str("\n偏差时间#<偏差>");
             text.push_str("\n管理列表/成员列表/群列表");
-            text.push_str("\n更新成员#<qq>#<number/type>");
-            text.push_str("\n批量更新成员#<qq1,qq2>#<number>");
-            text.push_str("\n更新成员type参数：");
-            text.push_str("\n  白名单");
-            text.push_str("\n  内部群");
-            text.push_str("\n  外部群");
-            text.push_str("\n  黑名单");
+            text.push_str("\n更新成员#<QQ>#<偏差/类别>");
+            text.push_str("\n 更新成员<类别>参数：");
+            text.push_str("\n <白名单/内部群/外部群/黑名单>");
+            text.push_str("\n批量更新成员#<QQ1,QQ2>#<偏差>");
             send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
         if msg.starts_with("发布时间#") && use_user.contains(&userid) {
