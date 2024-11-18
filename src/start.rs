@@ -51,7 +51,7 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
             let mut text = String::from("指令");
             text.push_str("\n发布时间#1970-10-01 08:00");
             text.push_str("\n偏差时间#<number>");
-            text.push_str("\n成员列表/群列表");
+            text.push_str("\n管理列表/成员列表/群列表");
             text.push_str("\n更新成员#<qq>#<number/type>");
             text.push_str("\n批量更新成员#<qq1,qq2>#<number>");
             text.push_str("\n更新成员type参数：");
@@ -77,6 +77,15 @@ pub async fn listen(cq_data: CqData<'_>, msg: String, config: Config) {
                     send_msg(SendMessageType::Group, cq_data.user_id, Some(*use_group), "新一轮时间已更新，请回复指令 40时间 获取时间！", 0).await;
                 }
             }
+        }
+        if msg.eq("管理列表") && use_user.contains(&userid) {
+            let users = get_users(userid, 1).await;
+            let mut text = String::from("管理列表");
+            for user in users {
+                let word = format!("\n{} | 偏差 {} | 管理员", user.name.unwrap(), user.view.unwrap());
+                text.push_str(&word);
+            }
+            send_msg(SendMessageType::Private, Option::from(userid), group_id, &text, -1).await;
         }
         if msg.eq("成员列表") && use_user.contains(&userid) {
             let users = get_users(userid, 2).await;
