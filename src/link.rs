@@ -1,12 +1,11 @@
-use futures_util::{stream::{SplitSink, SplitStream}, SinkExt, StreamExt};
-use serde_json::{json};
-use tokio::{net::TcpStream};
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream, tungstenite::{Message}};
-use void_log::*;
-use crate::api::cc_http::CcData;
-use crate::api::cq_http::CqData;
+use crate::api::one_bot::OneBotData;
 use crate::start;
 use crate::util::Config;
+use futures_util::{stream::{SplitSink, SplitStream}, SinkExt, StreamExt};
+use serde_json::json;
+use tokio::net::TcpStream;
+use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use void_log::*;
 
 pub async fn conn() {
     let bot = Config::get().await.bot.unwrap_or_default();
@@ -17,25 +16,20 @@ pub async fn conn() {
     let (mut socket, mut message) = client.split();
 
     let handle = handle(&mut message);
-    let intent = intent(&mut socket);
-    tokio::join!(handle, intent);
+    let _intent = intent(&mut socket);
+    tokio::join!(handle);
 }
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
     log_info!("{}", "收发线程loop");
-    loop {
-        if let Some(Ok(Message::Text(data))) = message.next().await {
-            log_msg!("WebSocket分片连接: {}", &data);
-            let cc_data = serde_json::from_str::<CcData>(&data).unwrap_or(Default::default());
-
-            if Some(0) == cc_data.op {
-                let body = cc_data.body.unwrap();
-                start::listen(body.clone()).await;
-            }
-        } else {
-            log_error!("收发线程中断");
-            break;
+    while let Some(Ok(Message::Text(data))) = message.next().await {
+        log_msg!("WebSocket分片连接: {}", &data);
+        if let Ok(value_data) = serde_json::from_str::<OneBotData>(&data) {
+            start::listen(value_data.clone()).await;
         }
+        if let Err(e) = serde_json::from_str::<OneBotData>(&data) {
+            panic!("{}", e);
+        };
     }
 }
 

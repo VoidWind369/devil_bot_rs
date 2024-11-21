@@ -1,4 +1,3 @@
-use crate::api::cc_http::*;
 use crate::util::Config;
 use chrono::{Datelike, Local, NaiveDateTime};
 use futures_util::AsyncReadExt;
@@ -6,29 +5,39 @@ use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
 use void_log::*;
+use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
 
-pub async fn listen(cc_body: CcDataBody) {
-    let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
+pub async fn listen(ob_data: OneBotData) {
+    let (mut msg, mut at) = ("".to_string(), "".to_string());
+    for data_message in ob_data.message.unwrap_or_default() {
+        if let Some(msg_data) = data_message.data {
+            if let Some(text) = msg_data.text {
+                msg = text
+            }
+            if let Some(qq) = msg_data.qq {
+                at = qq
+            }
+        } else { continue; }
+    }
 
     // *******************群聊消息*******************
-    if let Some(group) = cc_body.channel.unwrap().id {
+    if let Some(group) = ob_data.group_id {
+        log_info!("消息 {}", &msg);
         if msg.eq("指令") {
             let api = zn_api().await;
-            send_group_msg(&group, &api, -1).await;
+            send_msg(SendMessageType::Group, ob_data.user_id, Some(group), &api, -1).await;
         } else {
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(0.00..1000.00);
 
             if y > 980.00 {
                 let api = zn_api().await;
-                send_group_msg(&group, &api, -1).await;
+                send_msg(SendMessageType::Group, ob_data.user_id, Some(group), &api, -1).await;
             }
 
             log_info!("{y}")
         }
     }
-
-    log_info!("消息 {}", &msg);
 }
 
 fn to_native_dt(time_str: &str) -> NaiveDateTime {
@@ -44,7 +53,8 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
 }
 
 async fn zn_api() -> String {
-    let url = "https://whyta.cn/api/tx/saylove?key=cc8cba0a7069";
+    let api = Config::get().await.api.unwrap_or_default();
+    let url = format!("{}?key={}", api.url.unwrap_or_default(), api.token.unwrap_or_default());
     let client = Client::new()
         .get(url).send().await.unwrap();
     let value = client.json::<Value>().await.unwrap();

@@ -1,8 +1,9 @@
 bot:
-  ws: ws://119.91.53.206:5500/v1/events
-  url: http://119.91.53.206:5500/v1
+  ws: ws://119.91.53.206:30001
+  url: http://119.91.53.206:30000
   token: f29b0eb8767082b01e702474ea3284e1373a50ee12ab58543dd2278e01f64acd
 api:
-  url: http://get.cocsnipe.top/coc
+  url: https://whyta.cn/api/tx/saylove
+  token: f922bcb04085
 chat_use:
   group: 622678662

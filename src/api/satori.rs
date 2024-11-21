@@ -2,32 +2,32 @@ use reqwest::Client;
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::api::cq_http::SendCqGroup;
+use crate::api::one_bot::SendOneBotGroup;
 use void_log::*;
 use crate::util::Config;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CcData {
+pub struct SatoriData {
     pub op: Option<i64>,
-    pub body: Option<CcDataBody>,
+    pub body: Option<SatoriDataBody>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CcDataBody {
+pub struct SatoriDataBody {
     pub id: Option<i64>,
     pub r#type: Option<String>,
     pub platform: Option<String>,
     pub self_id: Option<String>,
     pub timestamp: Option<i64>,
-    pub user: Option<CcDataBodyInfo>,
-    pub channel: Option<CcDataBodyInfo>,
-    pub guild: Option<CcDataBodyInfo>,
+    pub user: Option<SatoriDataBodyInfo>,
+    pub channel: Option<SatoriDataBodyInfo>,
+    pub guild: Option<SatoriDataBodyInfo>,
     pub member: Option<Value>,
-    pub message: Option<CcDataBodyInfo>,
+    pub message: Option<SatoriDataBodyInfo>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CcDataBodyInfo {
+pub struct SatoriDataBodyInfo {
     pub id: Option<String>,
     pub name: Option<String>,
     pub r#type: Option<i64>,
