@@ -1,10 +1,9 @@
+use crate::util::Config;
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::Client;
-use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::api::one_bot::SendOneBotGroup;
 use void_log::*;
-use crate::util::Config;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SatoriData {
