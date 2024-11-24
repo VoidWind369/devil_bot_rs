@@ -12,7 +12,7 @@ struct ImageText {
     p_x: i32,           // 横轴
     p_y: i32,           // 纵轴
     aligns: Vec<Align>, // 居中
-    pixel: i32,         // dpi
+    pixel: u32,         // dpi
 }
 
 struct ImagePicture {
@@ -82,27 +82,32 @@ impl ImageText {
             pixel: 72,
         }
     }
+
     pub fn set_color(mut self, color: Rgba<u8>) -> Self {
         self.color = color;
         self
     }
+
     pub fn set_axis(mut self, x: i32, y: i32) -> Self {
         self.p_x = x;
         self.p_y = y;
         self
     }
+
     pub fn set_aligns(mut self, aligns: Vec<Align>) -> Self {
         self.aligns = aligns;
         self
     }
-    pub fn set_pixel(mut self, pixel: i32) -> Self {
+
+    pub fn set_pixel(mut self, pixel: u32) -> Self {
         self.pixel = pixel;
         self
     }
+
     pub fn draw(&self, mut rgba_image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
-        let (mut x, mut y) = (self.p_x * pixel, self.p_y * pixel);
+        let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
         // 计算文字大小和位置
         let text_scale = text_size(&self.scale, &self.font, &self.text);
 
@@ -126,6 +131,20 @@ impl ImageText {
 }
 
 impl ImagePicture {
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `picture`: DynamicImage图片
+    /// * `height`: 高度
+    ///
+    /// returns: ImagePicture
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
     pub fn new(picture: DynamicImage, height: u32) -> Self {
         Self {
             picture,
@@ -136,19 +155,23 @@ impl ImagePicture {
             pixel: 72,
         }
     }
+
     pub fn set_axis(mut self, x: i32, y: i32) -> Self {
         self.p_x = x;
         self.p_y = y;
         self
     }
+
     pub fn set_aligns(mut self, aligns: Vec<Align>) -> Self {
         self.aligns = aligns;
         self
     }
+
     pub fn set_pixel(mut self, pixel: u32) -> Self {
         self.pixel = pixel;
         self
     }
+
     pub fn draw(&self, mut rgba_image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
         let pixel = &self.pixel / 72;
         let (x, y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
