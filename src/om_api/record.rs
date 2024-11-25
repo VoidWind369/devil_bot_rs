@@ -1,13 +1,14 @@
 use crate::util::Config;
 use chrono::{Local, NaiveDateTime};
 use hmac::{Hmac, Mac};
+use jsonwebtoken::{encode, EncodingKey, Header};
 use jwt::SignWithKey;
 use md5::Digest;
 use reqwest::header::HeaderMap;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use sha2::Sha256;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Record {
@@ -53,9 +54,10 @@ impl Record {
         let mut payload = BTreeMap::new();
         payload.insert("openid", openid.to_string());
         payload.insert("time", Local::now().naive_local().to_string());
-        let key = md5::compute(b"leinuococ");
-        let key:Hmac<Sha256> = Hmac::new_from_slice(b"leinuococ").unwrap();
-        let token = payload.sign_with_key(&key).unwrap();
+        let key = md5::compute(b"leinuococ").0;
+        // let key:Hmac<Sha256> = Hmac::new_from_slice(b"leinuococ").unwrap();
+        // let token = payload.sign_with_key(&key).unwrap();
+        let token = encode(&Header::default(), &payload, &EncodingKey::from_secret(&key)).unwrap();
 
         let mut headers = HeaderMap::new();
         headers.insert("token", token.parse().unwrap());
@@ -63,13 +65,11 @@ impl Record {
         let mut params: BTreeMap<String, String> = BTreeMap::new();
         params.insert("tag".to_owned(), tag.to_string());
         params.insert("type".to_owned(), r#type.to_string());
-        let url = Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params).unwrap();
+        let url =
+            Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params)
+                .unwrap();
 
-        let response = Client::new()
-            .get(url)
-            .headers(headers)
-            .send()
-            .await;
+        let response = Client::new().get(url).headers(headers).send().await;
         response.unwrap().json::<Self>().await.unwrap()
     }
 }
