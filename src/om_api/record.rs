@@ -9,6 +9,7 @@ use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::BTreeMap;
+use crate::modal::app_qq::AppQQ;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Record {
@@ -47,16 +48,22 @@ struct RecordScoreRecord {
     tag: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Payload {
+    openid: String,
+    time: f64,
+}
+
 impl Record {
-    pub async fn new(tag: &str, r#type: i64) -> Self {
+    pub async fn new(tag: &str, userid: &str, r#type: i64) -> Self {
         let api = Config::get().await.get_api();
-        let openid = 0;
-        let mut payload = BTreeMap::new();
-        payload.insert("openid", openid.to_string());
-        payload.insert("time", Local::now().naive_local().to_string());
+
+        let app_qq = AppQQ::select(userid).await.unwrap();
+        let payload = Payload {
+            openid: app_qq.openid.unwrap_or("0".to_string()),
+            time: Local::now().timestamp_micros() as f64 / 1000.0,
+        };
         let key = md5::compute(b"leinuococ").0;
-        // let key:Hmac<Sha256> = Hmac::new_from_slice(b"leinuococ").unwrap();
-        // let token = payload.sign_with_key(&key).unwrap();
         let token = encode(&Header::default(), &payload, &EncodingKey::from_secret(&key)).unwrap();
 
         let mut headers = HeaderMap::new();

@@ -12,9 +12,9 @@ pub struct AppQQ {
 }
 
 impl AppQQ {
-    pub async fn select(user: &str) -> Result<Vec<Self>, Error> {
+    pub async fn select(user: &str) -> Result<AppQQ, Error> {
         let pool = Config::get().await.get_database().mysql_om().await;
         let sql = "select * from app_qq INNER JOIN app_openid on app_qq.openid_id=app_openid.id where app_qq.qq=?";
-        sqlx::query_as::<_, Self>(sql).bind(user).fetch_all(&pool).await
+        sqlx::query_as::<_, Self>(sql).bind(user).fetch_one(&pool).await
     }
 }
