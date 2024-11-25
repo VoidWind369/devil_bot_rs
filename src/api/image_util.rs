@@ -1,8 +1,8 @@
 use ab_glyph::{FontArc, PxScale};
-use image::{DynamicImage, ImageBuffer, Rgba};
+use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use image::imageops::overlay;
 use imageproc::definitions::HasBlack;
-use imageproc::drawing::{draw_text_mut, text_size};
+use imageproc::drawing::{draw_text_mut, text_size, Canvas};
 
 struct ImageText {
     text: String,       // 文本
@@ -104,12 +104,12 @@ impl ImageText {
         self
     }
 
-    pub fn draw(&self, mut rgba_image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    pub fn draw(&self, mut rgba_image: &DynamicImage) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
         let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
         // 计算文字大小和位置
-        let text_scale = text_size(&self.scale, &self.font, &self.text);
+        let text_scale = text_size(self.scale, &self.font, &self.text);
 
         for align in &self.aligns {
             align.new(x, y, text_scale)
@@ -172,7 +172,7 @@ impl ImagePicture {
         self
     }
 
-    pub fn draw(&self, mut rgba_image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    pub fn draw(&self, mut rgba_image: &DynamicImage) {
         let pixel = &self.pixel / 72;
         let (x, y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
 

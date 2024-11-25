@@ -59,4 +59,12 @@ impl Config {
         yaml_file.read_to_string(&mut yaml_str).await.expect("read str error");
         serde_yml::from_str::<Config>(yaml_str.as_str()).expect("config error")
     }
+
+    pub fn get_api(self) -> ConfigApi {
+        self.api.unwrap_or_default()
+    }
+
+    pub fn get_database(self) -> ConfigDatabase {
+        self.database.unwrap_or_default()
+    }
 }

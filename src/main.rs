@@ -1,11 +1,11 @@
-use log::{log, Level};
-use rmp_serde::Serializer;
 use serde::Serialize;
 use void_log::{log_error, log_info, log_link, log_warn};
 
 mod api;
 mod link;
+mod modal;
 mod msg_pack;
+mod om_api;
 mod start;
 mod util;
 
@@ -27,19 +27,6 @@ async fn main() {
 
 #[tokio::test]
 async fn test() {
-    log::log!(Level::Debug, "logging");
-    log::log!(Level::Info, "logging");
-    log::log!(Level::Warn, "logging");
-    log::log!(Level::Error, "logging");
-    // let mut buf = Vec::new();
-    // let mp = msg_pack::Message::new("虚無风", "测试cececec");
-    // mp.serialize(&mut Serializer::new(&mut buf)).unwrap();
-    // log_info!("{:?}", buf);
-    //
-    // reqwest::Client::new()
-    //     .post("")
-    //     .body(buf)
-    //     .send()
-    //     .await
-    //     .unwrap();
+    let a = om_api::record::Record::new("#8GYUVV", 0).await;
+    log_info!("{:?}", a)
 }

@@ -5,5 +5,9 @@ bot:
 api:
   url: https://whyta.cn/api/tx/saylove
   token: f922bcb04085
+database:
+  url: mysql://119.91.53.206:3306/coc
+  username: coc
+  password: 2FRGCtTxh5RdNBBf
 chat_use:
   group: 622678662
