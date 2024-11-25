@@ -2,6 +2,8 @@ bot:
   ws: ws://119.91.53.206:30001
   url: http://119.91.53.206:30000
   token: f29b0eb8767082b01e702474ea3284e1373a50ee12ab58543dd2278e01f64acd
+om_api:
+  url: https://www.omcoc.club
 api:
   url: https://whyta.cn/api/tx/saylove
   token: f922bcb04085

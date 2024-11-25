@@ -1,8 +1,8 @@
 use ab_glyph::{FontArc, PxScale};
-use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use image::imageops::overlay;
+use image::{DynamicImage, Rgba, RgbaImage};
 use imageproc::definitions::HasBlack;
-use imageproc::drawing::{draw_text_mut, text_size, Canvas};
+use imageproc::drawing::{draw_text_mut, text_size};
 
 struct ImageText {
     text: String,       // 文本
@@ -115,8 +115,8 @@ impl ImageText {
             align.new(x, y, text_scale)
         }
 
-        let x = x.clamp(0, (width - 1) as i32);
-        let y = y.clamp(0, (height - 1) as i32);
+        x = x.clamp(0, (width - 1) as i32);
+        y = y.clamp(0, (height - 1) as i32);
         // 在图像上绘制文字
         draw_text_mut(
             &mut rgba_image,

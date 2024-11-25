@@ -1,6 +1,5 @@
 use crate::util::Config;
 use chrono::{Datelike, Local, NaiveDateTime};
-use futures_util::AsyncReadExt;
 use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
@@ -53,7 +52,7 @@ fn to_native_dt(time_str: &str) -> NaiveDateTime {
 }
 
 async fn zn_api() -> String {
-    let api = Config::get().await.api.unwrap_or_default();
+    let api = Config::get().await.get_api();
     let url = format!("{}?key={}", api.url.unwrap_or_default(), api.token.unwrap_or_default());
     let client = Client::new()
         .get(url).send().await.unwrap();

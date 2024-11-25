@@ -1,19 +1,17 @@
+use crate::modal::app_qq::AppQQ;
 use crate::util::Config;
 use chrono::{Local, NaiveDateTime};
-use hmac::{Hmac, Mac};
+use hmac::Mac;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use jwt::SignWithKey;
-use md5::Digest;
 use reqwest::header::HeaderMap;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 use std::collections::BTreeMap;
-use crate::modal::app_qq::AppQQ;
+use void_log::log_info;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Record {
-    pub code: Option<i64>,
+    pub code: Option<bool>,
     pub id: Option<i64>,
     pub state: Option<String>,
     pub result: Option<String>,
@@ -50,21 +48,24 @@ struct RecordScoreRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Payload {
-    openid: String,
+    openid: i64,
     time: f64,
 }
 
 impl Record {
     pub async fn new(tag: &str, userid: &str, r#type: i64) -> Self {
-        let api = Config::get().await.get_api();
+        let api = Config::get().await.get_om_api();
 
         let app_qq = AppQQ::select(userid).await.unwrap();
+        let local_now = Local::now().timestamp_nanos_opt().unwrap() as f64 / 1000000000.0;
         let payload = Payload {
-            openid: app_qq.openid.unwrap_or("0".to_string()),
-            time: Local::now().timestamp_micros() as f64 / 1000.0,
+            openid: 0,
+            time: local_now,
         };
         let key = md5::compute(b"leinuococ").0;
         let token = encode(&Header::default(), &payload, &EncodingKey::from_secret(&key)).unwrap();
+
+        log_info!("{} {}", &token, local_now);
 
         let mut headers = HeaderMap::new();
         headers.insert("token", token.parse().unwrap());
@@ -75,6 +76,8 @@ impl Record {
         let url =
             Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params)
                 .unwrap();
+
+        log_info!("{}", &url);
 
         let response = Client::new().get(url).headers(headers).send().await;
         response.unwrap().json::<Self>().await.unwrap()

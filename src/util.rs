@@ -10,6 +10,7 @@ pub struct Config {
     // request
     pub bot: Option<ConfigApi>,
     pub api: Option<ConfigApi>,
+    pub om_api: Option<ConfigApi>,
     // QQ Bot
     pub chat_use: Option<ConfigChatUse>,
 }
@@ -62,6 +63,10 @@ impl Config {
 
     pub fn get_api(self) -> ConfigApi {
         self.api.unwrap_or_default()
+    }
+
+    pub fn get_om_api(self) -> ConfigApi {
+        self.om_api.unwrap_or_default()
     }
 
     pub fn get_database(self) -> ConfigDatabase {

@@ -1,4 +1,3 @@
-use serde::Serialize;
 use void_log::{log_error, log_info, log_link, log_warn};
 
 mod api;
@@ -27,6 +26,6 @@ async fn main() {
 
 #[tokio::test]
 async fn test() {
-    let a = om_api::record::Record::new("#8GYUVV", 0).await;
+    let a = om_api::record::Record::new("#8GYUVV", "1329997614", 0).await;
     log_info!("{:?}", a)
 }

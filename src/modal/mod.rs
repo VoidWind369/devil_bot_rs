@@ -1,6 +1,6 @@
 use crate::util::ConfigDatabase;
 use sqlx::mysql::MySqlConnectOptions;
-use sqlx::{Connection, MySql, Pool};
+use sqlx::{MySql, Pool};
 use std::str::FromStr;
 
 pub mod app_qq;
