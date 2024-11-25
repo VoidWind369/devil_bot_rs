@@ -74,7 +74,7 @@ impl Record {
         params.insert("tag".to_owned(), tag.to_string());
         params.insert("type".to_owned(), r#type.to_string());
         let url =
-            Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params)
+            Url::parse_with_params(&format!("{}/record/", api.url.unwrap_or_default()), &params)
                 .unwrap();
 
         log_info!("{}", &url);
