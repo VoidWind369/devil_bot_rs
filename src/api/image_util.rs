@@ -104,7 +104,7 @@ impl ImageText {
         self
     }
 
-    pub fn draw(&self, mut rgba_image: &DynamicImage) {
+    pub fn draw(self, mut rgba_image: RgbaImage) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
         let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
@@ -120,10 +120,10 @@ impl ImageText {
         // 在图像上绘制文字
         draw_text_mut(
             &mut rgba_image,
-            &self.color,
+            self.color,
             x,
             y,
-            &self.scale,
+            self.scale,
             &self.font,
             &self.text,
         );
@@ -172,7 +172,7 @@ impl ImagePicture {
         self
     }
 
-    pub fn draw(&self, mut rgba_image: &DynamicImage) {
+    pub fn draw(&self, mut rgba_image: RgbaImage) {
         let pixel = &self.pixel / 72;
         let (x, y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
 
@@ -189,6 +189,6 @@ impl ImagePicture {
             align.new(x, y, (picture_weight, picture_height));
         }
 
-        overlay(&mut rgba_image, &img, x as i64, y as i64);
+        overlay(&mut rgba_image, img, x as i64, y as i64);
     }
 }
