@@ -8,9 +8,11 @@ use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use void_log::log_info;
+use md5::Digest;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Record {
+    pub msg: Option<String>,
     pub code: Option<bool>,
     pub id: Option<i64>,
     pub state: Option<String>,
@@ -62,7 +64,10 @@ impl Record {
             openid: 0,
             time: local_now,
         };
-        let key = md5::compute(b"leinuococ").0;
+        let mut key = md5::Md5::new();
+        key.update(b"leinuococ");
+        let key = key.finalize().to_vec();
+        // let key = hashlib::md5::Md5::try_from(key).unwrap().finalize().unwrap().0;
         let token = encode(&Header::default(), &payload, &EncodingKey::from_secret(&key)).unwrap();
 
         log_info!("{} {}", &token, local_now);
