@@ -18,6 +18,6 @@ async fn get_record(Path(tag): Path<String>) -> impl IntoResponse {
 
 pub fn router(app: Router) -> Router {
     let img = Router::new()
-        .route("/get_record", get(get_record));
+        .route("/get_record/{tag}", get(get_record));
     app.nest("/img", img)
 }

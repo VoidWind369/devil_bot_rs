@@ -87,7 +87,7 @@ impl Record {
 
         let mut params: BTreeMap<String, String> = BTreeMap::new();
         // params.insert("format".to_string(), "json".to_string());
-        params.insert("tag".to_owned(), tag.to_string());
+        params.insert("tag".to_owned(), format!("#{}", tag.replace("#", "")));
         params.insert("type".to_owned(), r#type.to_string());
         let url =
             Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params)

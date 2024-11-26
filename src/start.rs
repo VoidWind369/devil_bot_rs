@@ -56,13 +56,13 @@ pub async fn listen(ob_data: OneBotData) {
         }
         if msg.starts_with("查询日记#") {
             let split_str = msg.split('#');
-            let tag = format!("#{}", split_str.last().unwrap());
+            let tag = split_str.last().unwrap();
             tokio::fs::create_dir_all("/cache/record/").await.unwrap();
             send_msg(
                 SendMessageType::Group,
                 ob_data.user_id,
                 Some(group),
-                &format!("http://localhost:50000/img/get_record/{}", &tag),
+                &format!("http://localhost:50000/img/get_record/{}", tag),
                 -1,
             )
                 .await;
