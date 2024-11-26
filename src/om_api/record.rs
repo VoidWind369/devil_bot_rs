@@ -56,21 +56,21 @@ struct RecordScoreRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Payload {
-    openid: i64,
+    openid: String,
     time: f64,
 }
 
 impl Record {
-    pub async fn new(tag: &str, userid: &str, r#type: i64) -> Self {
+    pub async fn new(tag: &str, userid: impl AsRef<str>, r#type: i64) -> Self {
         let api = Config::get().await.get_om_api();
 
-        let app_qq = AppQQ::select(userid).await.unwrap();
+        let app_qq = AppQQ::select(userid.as_ref()).await.unwrap();
         let local_now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs_f64();
         let payload = Payload {
-            openid: 0,
+            openid: "0".to_string(),
             time: local_now,
         };
         let token = encode(
