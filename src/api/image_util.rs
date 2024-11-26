@@ -1,6 +1,6 @@
 use ab_glyph::{FontArc, PxScale};
 use image::imageops::overlay;
-use image::{DynamicImage, GenericImage, GenericImageView, Rgba, RgbaImage};
+use image::{DynamicImage, GenericImageView, Rgba};
 use imageproc::definitions::HasBlack;
 use imageproc::drawing::{draw_text_mut, text_size};
 
@@ -34,7 +34,7 @@ pub enum Align {
 }
 
 impl Align {
-    fn new(&self, mut x: i32, mut y: i32, (weight, height): (u32, u32)) {
+    fn new(&self, mut x: i32, mut y: i32, (weight, height): (u32, u32)) -> (i32, i32) {
         match &self {
             Align::Horizontally => {
                 x = x - weight as i32 / 2;
@@ -50,6 +50,7 @@ impl Align {
             }
             _ => {}
         }
+        (x, y)
     }
 }
 
@@ -112,20 +113,14 @@ impl<'a> ImageText<'a> {
         let text_scale = text_size(self.scale, &self.font, &self.text);
 
         for align in &self.aligns {
-            align.new(x, y, text_scale)
+            (x, y) = align.new(x, y, text_scale)
         }
 
         x = x.clamp(0, (width - 1) as i32);
         y = y.clamp(0, (height - 1) as i32);
         // 在图像上绘制文字
         draw_text_mut(
-            rgba_image,
-            self.color,
-            x,
-            y,
-            self.scale,
-            &self.font,
-            &self.text,
+            rgba_image, self.color, x, y, self.scale, &self.font, &self.text,
         );
     }
 }
@@ -148,7 +143,9 @@ impl ImagePicture {
     pub fn new(picture: DynamicImage, height: u32) -> Self {
         let height = if height == 0 {
             picture.height()
-        } else { height };
+        } else {
+            height
+        };
         Self {
             picture,
             height,
@@ -177,7 +174,7 @@ impl ImagePicture {
 
     pub fn draw(&self, rgba_image: &mut DynamicImage) {
         let pixel = &self.pixel / 72;
-        let (x, y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
+        let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
 
         let picture_weight = &self.height * pixel * &self.picture.width() / &self.picture.height();
         let picture_height = &self.height * pixel;
@@ -189,7 +186,7 @@ impl ImagePicture {
 
         // 居中判断
         for align in &self.aligns {
-            align.new(x, y, (picture_weight, picture_height));
+            (x, y) = align.new(x, y, (picture_weight, picture_height));
         }
 
         overlay(rgba_image, img, x as i64, y as i64);
