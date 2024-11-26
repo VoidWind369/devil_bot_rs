@@ -31,6 +31,6 @@ async fn main() {
 
 #[tokio::test]
 async fn test() {
-    let a = om_api::record::Record::new("#8GYUVV", "1329997614", 0).await;
+    let a = om_api::record::Record::new("#Y00UQJPJ", "1329997614", 0).await;
     log_info!("{:?}", a)
 }

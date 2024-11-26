@@ -61,7 +61,7 @@ struct Payload {
 }
 
 impl Record {
-    pub async fn new(tag: &str, userid: &str, r#type: i64) -> String {
+    pub async fn new(tag: &str, userid: &str, r#type: i64) -> Self {
         let api = Config::get().await.get_om_api();
 
         let app_qq = AppQQ::select(userid).await.unwrap();
@@ -73,9 +73,6 @@ impl Record {
             openid: 0,
             time: local_now,
         };
-        let mut key = md5::Md5::new();
-        key.update(b"leinuococ");
-        let key = key.finalize();
         let token = encode(
             &Header::default(),
             &payload,
@@ -106,8 +103,8 @@ impl Record {
             .send()
             .await
             .unwrap();
-        response.text().await.unwrap()
-        // response.json::<Self>().await.unwrap()
+        // response.text().await.unwrap()
+        response.json::<Self>().await.unwrap()
     }
 }
 
