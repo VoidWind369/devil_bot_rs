@@ -89,11 +89,14 @@ impl Record {
         headers.insert("token", token.parse().unwrap());
 
         let mut params: BTreeMap<String, String> = BTreeMap::new();
+        // params.insert("format".to_string(), "json".to_string());
         params.insert("tag".to_owned(), tag.to_string());
         params.insert("type".to_owned(), r#type.to_string());
-        let url =
-            Url::parse_with_params(&format!("{}/record/", api.url.unwrap_or_default()), &params)
-                .unwrap();
+        let url = Url::parse_with_params(
+            &format!("{}/record", api.url.unwrap_or_default()),
+            &params,
+        )
+        .unwrap();
 
         log_info!("{}", &url);
 
