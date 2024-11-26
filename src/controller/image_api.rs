@@ -7,7 +7,7 @@ use axum::routing::get;
 use axum::Router;
 
 async fn get_record(Path(tag): Path<String>) -> impl IntoResponse {
-    let data = Record::new(&tag, 0).await.list_img(50).await;
+    let data = Record::new(&tag, 0).await.list_img(50).await.into_bytes();
     let mut headers = HeaderMap::new();
     headers.insert(
         CONTENT_TYPE,
