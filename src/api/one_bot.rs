@@ -2,8 +2,8 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::*;
 use crate::util::Config;
+use crate::*;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct OneBotData {
@@ -97,19 +97,35 @@ pub struct SendOneBotGroupMessageData {
     qq: Option<String>,
     name: Option<String>,
     text: Option<String>,
+    file: Option<String>,
 }
 
-pub async fn send_msg(message_type: SendMessageType, user_id: Option<i64>, group_id: Option<i64>, text: &str, at: i64) -> String {
+pub async fn send_msg(
+    message_type: SendMessageType,
+    user_id: Option<i64>,
+    group_id: Option<i64>,
+    text: &str,
+    at: i64,
+) -> String {
     let config = Config::get().await;
     let url = format!("{}/send_msg", config.bot.unwrap().url.unwrap());
 
-    let message = match at {
-        -1 => vec![send_text(text)],
-        _ => vec![send_at(at), send_text(&format!(" {text}"))]
+    let message = if at < 0 {
+        if text.starts_with("file://") || text.starts_with("http://") || text.starts_with("https://") {
+            vec![send_image(text)]
+        } else {
+            vec![send_text(text)]
+        }
+    } else {
+        if text.starts_with("file://") || text.starts_with("http://") || text.starts_with("https://") {
+            vec![send_at(at), send_image(text)]
+        } else {
+            vec![send_at(at), send_text(&format!(" {text}"))]
+        }
     };
     let group_id = match message_type {
-        SendMessageType::Group => { group_id }
-        SendMessageType::Private => { None }
+        SendMessageType::Group => group_id,
+        SendMessageType::Private => None,
     };
     let send = SendMessage {
         message_type,
@@ -140,7 +156,7 @@ pub async fn _send_group_msg(group_id: &str, text: &str, at: i64) {
 
     let message = match at {
         -1 => vec![send_text(text)],
-        _ => vec![send_at(at), send_text(&format!(" {text}"))]
+        _ => vec![send_at(at), send_text(&format!(" {text}"))],
     };
     let send = SendOneBotGroup {
         user_id: None,
@@ -174,7 +190,7 @@ pub async fn _send_user_msg(user_id: &str, group_id: Option<String>, text: &str)
             user_id: Option::from(user_id.to_string()),
             group_id: None,
             message,
-        }
+        },
     };
     log_info!("{:?}", &send);
     let response = Client::new().post(url).json(&send).send().await;
@@ -212,7 +228,10 @@ pub async fn _get_group_member_info(group_id: i64, user_id: i64) -> Value {
 
 pub async fn set_friend_add_request(flag: &str, approve: bool) {
     let config = Config::get().await;
-    let url = format!("{}/set_friend_add_request", config.bot.unwrap().url.unwrap());
+    let url = format!(
+        "{}/set_friend_add_request",
+        config.bot.unwrap().url.unwrap()
+    );
     let json = json!({
         "flag": flag,
         "approve": approve,
@@ -236,6 +255,20 @@ fn send_text(text: &str) -> SendOneBotGroupMessage {
             qq: None,
             name: None,
             text: Option::from(text.to_string()),
+            file: None,
+        },
+    }
+}
+
+fn send_image(path: &str) -> SendOneBotGroupMessage {
+    SendOneBotGroupMessage {
+        r#type: "image".to_string(),
+        data: SendOneBotGroupMessageData {
+            id: None,
+            qq: None,
+            name: None,
+            text: None,
+            file: Option::from(path.to_string()),
         },
     }
 }
@@ -249,6 +282,7 @@ fn send_at(id: i64) -> SendOneBotGroupMessage {
                 qq: Option::from("all".to_string()),
                 name: None,
                 text: None,
+                file: None,
             },
         },
         _ => SendOneBotGroupMessage {
@@ -258,7 +292,8 @@ fn send_at(id: i64) -> SendOneBotGroupMessage {
                 qq: Option::from(id.to_string()),
                 name: None,
                 text: None,
+                file: None,
             },
-        }
+        },
     }
 }

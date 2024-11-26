@@ -1,6 +1,7 @@
 use void_log::{log_error, log_info, log_link, log_warn};
 
 mod api;
+mod controller;
 mod link;
 mod modal;
 mod msg_pack;
@@ -10,18 +11,29 @@ mod util;
 
 #[tokio::main]
 async fn main() {
-    println!("=================================================================");
-    log_info!("正常标识");
-    log_warn!("警告标识");
-    log_error!("错误标识");
-    log_link!("WebSocket在线保持");
-    println!("=================================================================");
+    let mut banner = String::from("--------------");
+    banner.push_str("\n   ██████╗ ██████╗  █████╗ ███╗   ██╗ ██████╗ ███████╗  ");
+    banner.push_str("\n  ██╔═══██╗██╔══██╗██╔══██╗████╗  ██║██╔════╝ ██╔════╝  ");
+    banner.push_str("\n  ██║   ██║██████╔╝███████║██╔██╗ ██║██║  ███╗█████╗    ");
+    banner.push_str("\n  ██║   ██║██╔══██╗██╔══██║██║╚██╗██║██║   ██║██╔══╝    ");
+    banner.push_str("\n  ╚██████╔╝██║  ██║██║  ██║██║ ╚████║╚██████╔╝███████╗  ");
+    banner.push_str("\n   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝  ");
+    banner.push_str("\n--------------------------------------------------------");
+    log_info!("{}", banner);
 
     log_info!("登录中....");
 
-    loop {
-        link::conn().await;
-    }
+    // 启动服务器
+    let server = controller::run();
+
+    // 启动机器人
+    let bot = async {
+        loop {
+            link::conn().await;
+        }
+    };
+
+    tokio::join!(server, bot);
 }
 
 #[tokio::test]
@@ -29,5 +41,4 @@ async fn test() {
     let a = om_api::record::Record::new("#Y00UQJPJ", "1329997614", 0).await;
     log_info!("{:?}", &a);
     a.list_img(30).await.save("p.png").unwrap();
-
 }

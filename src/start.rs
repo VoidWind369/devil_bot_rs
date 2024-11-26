@@ -1,10 +1,12 @@
+use std::env;
+use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
+use crate::om_api::record::Record;
 use crate::util::Config;
 use chrono::{Datelike, Local, NaiveDateTime};
 use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
 use void_log::*;
-use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
 
 pub async fn listen(ob_data: OneBotData) {
     let (mut msg, mut at) = ("".to_string(), "".to_string());
@@ -16,7 +18,9 @@ pub async fn listen(ob_data: OneBotData) {
             if let Some(qq) = msg_data.qq {
                 at = qq
             }
-        } else { continue; }
+        } else {
+            continue;
+        }
     }
 
     // *******************群聊消息*******************
@@ -24,17 +28,44 @@ pub async fn listen(ob_data: OneBotData) {
         log_info!("消息 {}", &msg);
         if msg.eq("指令") {
             let api = zn_api().await;
-            send_msg(SendMessageType::Group, ob_data.user_id, Some(group), &api, -1).await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &api,
+                -1,
+            )
+                .await;
         } else {
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(0.00..1000.00);
 
             if y > 980.00 {
                 let api = zn_api().await;
-                send_msg(SendMessageType::Group, ob_data.user_id, Some(group), &api, -1).await;
+                send_msg(
+                    SendMessageType::Group,
+                    ob_data.user_id,
+                    Some(group),
+                    &api,
+                    -1,
+                )
+                    .await;
             }
 
             log_info!("{y}")
+        }
+        if msg.starts_with("查询日记#") {
+            let split_str = msg.split('#');
+            let tag = format!("#{}", split_str.last().unwrap());
+            tokio::fs::create_dir_all("/cache/record/").await.unwrap();
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &format!("http://localhost:50000/img/get_record/{}", &tag),
+                -1,
+            )
+                .await;
         }
     }
 }
@@ -42,20 +73,20 @@ pub async fn listen(ob_data: OneBotData) {
 fn to_native_dt(time_str: &str) -> NaiveDateTime {
     let full_str = format!("{}-{time_str}", Local::now().year());
     let fmt = "%Y-%m月%d号 %H:%M";
-    match NaiveDateTime::parse_from_str(&full_str, fmt) {
-        Ok(ndt) => { ndt }
-        Err(e) => {
-            log_warn!("Format Time Error {e}");
-            Default::default()
-        }
-    }
+    NaiveDateTime::parse_from_str(&full_str, fmt).unwrap_or_else(|e| {
+        log_warn!("Format Time Error {e}");
+        Default::default()
+    })
 }
 
 async fn zn_api() -> String {
     let api = Config::get().await.get_api();
-    let url = format!("{}?key={}", api.url.unwrap_or_default(), api.token.unwrap_or_default());
-    let client = Client::new()
-        .get(url).send().await.unwrap();
+    let url = format!(
+        "{}?key={}",
+        api.url.unwrap_or_default(),
+        api.token.unwrap_or_default()
+    );
+    let client = Client::new().get(url).send().await.unwrap();
     let value = client.json::<Value>().await.unwrap();
     log_info!("{:?}", value);
     value["result"]["content"].as_str().unwrap().to_string()
@@ -67,7 +98,7 @@ async fn get_comfy(text: String) -> String {
         "prompt": text
     });
     let response = Client::new().post(url).json(&json).send().await.unwrap();
-    log_info!("{:?}{:?}",response.status(), response.headers());
+    log_info!("{:?}{:?}", response.status(), response.headers());
     let res = response.json::<String>().await.unwrap();
     res
 }
@@ -79,7 +110,10 @@ async fn set_time(url: &str, json: Value) -> String {
         .send()
         .await
         .unwrap();
-    format!("{}", response.text().await.unwrap_or("没有更新".to_string()))
+    format!(
+        "{}",
+        response.text().await.unwrap_or("没有更新".to_string())
+    )
 }
 
 async fn set_xin() {
@@ -90,7 +124,10 @@ async fn set_xin() {
         .send()
         .await
         .unwrap();
-    log_info!("鑫盟{}", response.text().await.unwrap_or("没有更新".to_string()))
+    log_info!(
+        "鑫盟{}",
+        response.text().await.unwrap_or("没有更新".to_string())
+    )
 }
 
 fn _formal_fwa(string: String) -> String {

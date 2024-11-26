@@ -63,10 +63,8 @@ struct Payload {
 }
 
 impl Record {
-    pub async fn new(tag: &str, userid: impl AsRef<str>, r#type: i64) -> Self {
+    pub async fn new(tag: &str, r#type: i64) -> Self {
         let api = Config::get().await.get_om_api();
-
-        let app_qq = AppQQ::select(userid.as_ref()).await.unwrap();
         let local_now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
