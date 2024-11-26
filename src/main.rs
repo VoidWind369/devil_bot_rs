@@ -1,3 +1,8 @@
+use std::hash::{DefaultHasher, Hash};
+use std::ops::Deref;
+use jsonwebtoken::EncodingKey;
+use md5::Digest;
+use md5::digest::DynDigest;
 use void_log::{log_error, log_info, log_link, log_warn};
 
 mod api;
