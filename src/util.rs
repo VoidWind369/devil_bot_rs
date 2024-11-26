@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncReadExt;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub server_port: Option<i64>,
+    pub server: Option<ConfigServer>,
     // database
     pub database: Option<ConfigDatabase>,
     pub redis: Option<ConfigRedis>,
@@ -13,6 +13,13 @@ pub struct Config {
     pub om_api: Option<ConfigApi>,
     // QQ Bot
     pub chat_use: Option<ConfigChatUse>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ConfigServer {
+    pub url: Option<String>,
+    pub path: Option<String>,
+    pub port: Option<u16>,
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
@@ -44,15 +51,6 @@ pub struct ConfigChatUse {
     pub group: Option<String>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            server_port: Some(50000),
-            ..Default::default()
-        }
-    }
-}
-
 impl Config {
     pub async fn get() -> Self {
         let mut yaml_file = tokio::fs::File::open("config.yaml").await.expect("read config error");
@@ -71,5 +69,15 @@ impl Config {
 
     pub fn get_database(self) -> ConfigDatabase {
         self.database.unwrap_or_default()
+    }
+}
+
+impl Default for ConfigServer {
+    fn default() -> Self {
+        Self {
+            url: Option::from("localhost:50000".to_string()),
+            path: Option::from("localhost".to_string()),
+            port: Some(50000),
+        }
     }
 }

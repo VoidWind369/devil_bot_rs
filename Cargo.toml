@@ -21,8 +21,6 @@ chrono = { version = "0.4.38", features = ["serde"] }
 image = { version = "0.25.5", features = ["serde", "webp", "png"] }
 imageproc = "0.25.0"
 ab_glyph = { version = "0.2.29", features = ["variable-fonts"] }
-md-5 = "0.10.6"
-hex-literal = "*"
 jsonwebtoken = "9.3.0"
 
 void_log = { git = "https://gitee.com/orange_union/void_log.git" }

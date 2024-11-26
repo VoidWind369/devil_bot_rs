@@ -1,12 +1,12 @@
 use ab_glyph::{FontArc, PxScale};
 use image::imageops::overlay;
-use image::{DynamicImage, Rgba, RgbaImage};
+use image::{DynamicImage, GenericImage, GenericImageView, Rgba, RgbaImage};
 use imageproc::definitions::HasBlack;
 use imageproc::drawing::{draw_text_mut, text_size};
 
-struct ImageText {
+pub struct ImageText<'a> {
     text: String,       // 文本
-    font: FontArc,      // 字体
+    font: &'a FontArc,      // 字体
     scale: PxScale,     // 字体大小
     color: Rgba<u8>,    // 颜色
     p_x: i32,           // 横轴
@@ -15,7 +15,7 @@ struct ImageText {
     pixel: u32,         // dpi
 }
 
-struct ImagePicture {
+pub struct ImagePicture {
     picture: DynamicImage, // 图片
     height: u32,           // 高
     p_x: i32,              // 横轴
@@ -24,7 +24,7 @@ struct ImagePicture {
     pixel: u32,            // dpi
 }
 
-enum Align {
+pub enum Align {
     Horizontally, // 横向居中
     Vertically,   // 纵向居中
     Top,          // 上对齐
@@ -53,7 +53,7 @@ impl Align {
     }
 }
 
-impl ImageText {
+impl<'a> ImageText<'a> {
     ///
     ///
     /// # 水印文字
@@ -70,11 +70,11 @@ impl ImageText {
     /// let font = FontArc::try_from_slice(include_bytes!("../fonts/Exo2-Light.otf"))?;
     /// let image_text = ImageText::new("abc", font, PxScale::from(24.0))
     /// ```
-    pub fn new(text: &str, font: FontArc, scale: PxScale) -> Self {
+    pub fn new(text: &str, font: &'a FontArc, scale: f32) -> Self {
         Self {
             text: text.to_string(),
             font,
-            scale,
+            scale: PxScale::from(scale),
             color: Rgba::black(),
             p_x: 0,
             p_y: 0,
@@ -104,7 +104,7 @@ impl ImageText {
         self
     }
 
-    pub fn draw(self, mut rgba_image: RgbaImage) {
+    pub fn draw(self, rgba_image: &mut DynamicImage) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
         let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
@@ -119,7 +119,7 @@ impl ImageText {
         y = y.clamp(0, (height - 1) as i32);
         // 在图像上绘制文字
         draw_text_mut(
-            &mut rgba_image,
+            rgba_image,
             self.color,
             x,
             y,
@@ -136,7 +136,7 @@ impl ImagePicture {
     /// # Arguments
     ///
     /// * `picture`: DynamicImage图片
-    /// * `height`: 高度
+    /// * `height`: 高度(0为原值)
     ///
     /// returns: ImagePicture
     ///
@@ -146,6 +146,9 @@ impl ImagePicture {
     ///
     /// ```
     pub fn new(picture: DynamicImage, height: u32) -> Self {
+        let height = if height == 0 {
+            picture.height()
+        } else { height };
         Self {
             picture,
             height,
@@ -172,7 +175,7 @@ impl ImagePicture {
         self
     }
 
-    pub fn draw(&self, mut rgba_image: RgbaImage) {
+    pub fn draw(&self, rgba_image: &mut DynamicImage) {
         let pixel = &self.pixel / 72;
         let (x, y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
 
@@ -189,6 +192,6 @@ impl ImagePicture {
             align.new(x, y, (picture_weight, picture_height));
         }
 
-        overlay(&mut rgba_image, img, x as i64, y as i64);
+        overlay(rgba_image, img, x as i64, y as i64);
     }
 }
