@@ -4,7 +4,6 @@ use ab_glyph::FontArc;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use chrono::NaiveDateTime;
-use std::io::Cursor;
 use image::{open, ColorType, DynamicImage, ImageFormat, Rgba};
 use imageproc::definitions::HasWhite;
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -12,6 +11,7 @@ use reqwest::header::HeaderMap;
 use reqwest::{Client, Response, Url};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 use void_log::log_info;
 
@@ -162,6 +162,7 @@ impl Record {
         };
         ImageText::new(&data0tag, &font, 45.0)
             .set_axis(380, 165)
+            .set_color(Rgba([65, 40, 145, 255]))
             .set_aligns(vec![Align::Horizontally])
             .draw(&mut img_top);
         // 顶部写入base
@@ -172,10 +173,10 @@ impl Record {
 
         for (i, datum) in data.into_iter().enumerate() {
             let result = datum.result.unwrap();
-            let mut img = match result.as_str() {
-                "赢" => img_win.clone(),
-                "输" => img_lose.clone(),
-                _ => img_fail.clone(),
+            let (mut img, text_color) = match result.as_str() {
+                "赢" => (img_win.clone(), Rgba([0, 61, 30, 255])),
+                "输" => (img_lose.clone(), Rgba([122, 0, 9, 255])),
+                _ => (img_fail.clone(), Rgba([30, 30, 30, 255])),
             };
             let opponent_clan = datum.opponent_clan.unwrap_or_default();
             let y = top_height + list_height * i as u32;
@@ -183,6 +184,7 @@ impl Record {
             // 对方部落标签
             ImageText::new(&opponent_clan.tag.unwrap_or_default(), &font, font_size)
                 .set_axis(200, 30)
+                .set_color(text_color)
                 .set_aligns(vec![Align::Horizontally])
                 .draw(&mut img);
 
@@ -214,6 +216,7 @@ impl Record {
             let historical_score = datum.historical_score.unwrap_or_default().to_string();
             ImageText::new(&historical_score, &font, font_size)
                 .set_axis(845, body_down_y + 2)
+                .set_color(text_color)
                 .set_aligns(vec![Align::Horizontally])
                 .draw(&mut img);
 
@@ -222,6 +225,7 @@ impl Record {
             let score = score_change.score.unwrap_or_default().to_string();
             ImageText::new(&score, &font, font_size)
                 .set_axis(950, body_down_y + 2)
+                .set_color(text_color)
                 .set_aligns(vec![Align::Horizontally])
                 .draw(&mut img);
 
@@ -254,8 +258,10 @@ impl Record {
     }
 }
 
-pub async fn base64img(dynamic_image:DynamicImage) -> String {
+pub async fn base64img(dynamic_image: DynamicImage) -> String {
     let mut bytes: Vec<u8> = Vec::new();
-    dynamic_image.write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png).unwrap();
+    dynamic_image
+        .write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)
+        .unwrap();
     BASE64_STANDARD.encode(&bytes)
 }
