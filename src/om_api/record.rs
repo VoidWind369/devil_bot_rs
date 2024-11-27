@@ -1,13 +1,15 @@
 use crate::api::image_util::{Align, ImagePicture, ImageText};
-use crate::modal::app_qq::AppQQ;
 use crate::util::Config;
 use ab_glyph::FontArc;
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use chrono::NaiveDateTime;
-use image::{open, ColorType, DynamicImage, Rgba};
+use std::io::Cursor;
+use image::{open, ColorType, DynamicImage, ImageFormat, Rgba};
 use imageproc::definitions::HasWhite;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::header::HeaderMap;
-use reqwest::{Client, Url};
+use reqwest::{Client, Response, Url};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -56,14 +58,22 @@ struct RecordScoreRecord {
     tag: Option<String>,
 }
 
+// jwt校验
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct Payload {
     openid: String,
     time: f64,
 }
 
+// body
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct BodyRecord {
+    tag: String,
+    r#type: char,
+}
+
 impl Record {
-    pub async fn new(tag: &str, r#type: i64) -> Self {
+    pub async fn new(tag: &str, r#type: char) -> Response {
         let api = Config::get().await.get_om_api();
         let local_now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -86,31 +96,43 @@ impl Record {
         headers.insert("token", token.parse().unwrap());
 
         let mut params: BTreeMap<String, String> = BTreeMap::new();
-        // params.insert("format".to_string(), "json".to_string());
         params.insert("tag".to_owned(), format!("#{}", tag.replace("#", "")));
         params.insert("type".to_owned(), r#type.to_string());
-        let url =
-            Url::parse_with_params(&format!("{}/record", api.url.unwrap_or_default()), &params)
-                .unwrap();
+
+        let params = BodyRecord {
+            tag: format!("#{}", tag.replace("#", "")),
+            r#type,
+        };
+        // let url = Url::parse_with_params(&format!("{}/record/", api.url.unwrap_or_default()), &params).unwrap();
+        let url = format!("{}/record/", api.url.unwrap_or_default());
 
         log_info!("{}", &url);
 
-        let response = Client::new()
+        Client::new()
             .get(url)
             .headers(headers)
+            .json(&params)
             .send()
             .await
-            .unwrap();
-        // response.text().await.unwrap()
-        response.json::<Self>().await.unwrap()
+            .unwrap()
+    }
+
+    pub async fn new_text(tag: &str, r#type: char) -> String {
+        Self::new(tag, r#type).await.text().await.unwrap()
+    }
+
+    pub async fn new_json(tag: &str, r#type: char) -> Self {
+        Self::new(tag, r#type).await.json::<Self>().await.unwrap()
     }
 
     pub async fn list_img(self, size: usize) -> DynamicImage {
+        log_info!("Records Self {:?}", &self);
         let data = if self.data.len() < size {
             self.data
         } else {
             self.data[0..size].to_vec()
         };
+        log_info!("Records Data {:?}", &data);
 
         let mut img_top = open("static/image/record/top_0727.png").unwrap();
         let img_bottom = open("static/image/record/bottom_0727.png").unwrap();
@@ -230,4 +252,10 @@ impl Record {
 
         base
     }
+}
+
+pub async fn base64img(dynamic_image:DynamicImage) -> String {
+    let mut bytes: Vec<u8> = Vec::new();
+    dynamic_image.write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png).unwrap();
+    BASE64_STANDARD.encode(&bytes)
 }

@@ -1,15 +1,9 @@
 use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
-use crate::om_api::record::Record;
+use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
-use base64::Engine;
-use image::ImageBuffer;
-use image::ImageFormat::Png;
 use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
-use std::io::Cursor;
-use base64::prelude::BASE64_STANDARD;
-use futures_util::SinkExt;
 use void_log::*;
 
 pub async fn listen(ob_data: OneBotData) {
@@ -59,18 +53,15 @@ pub async fn listen(ob_data: OneBotData) {
             log_info!("{y}")
         }
         if msg.starts_with("查询日记#") {
-            let split_str = msg.split('#');
-            let tag = split_str.last().unwrap();
-            // tokio::fs::create_dir_all("./cache/record/").await.unwrap();
-            let img = Record::new(tag, 0).await.list_img(50).await;
-            // let base64_str = base64::prelude::BASE64_STANDARD_NO_PAD.encode(img.as_bytes());
-            let mut bytes: Vec<u8> = Vec::new();
-            img.write_to(&mut Cursor::new(&mut bytes), Png).unwrap();
+            let mut split_str = msg.split('#').skip(1);
+            let tag = split_str.next().unwrap_or_default();
+            let type_str = split_str.next().unwrap_or("0").parse::<char>().unwrap_or_default();
+            let img = Record::new_json(tag, type_str).await.list_img(50).await;
             send_msg(
                 SendMessageType::Group,
                 ob_data.user_id,
                 Some(group),
-                &format!("data:image/png;base64,{}", BASE64_STANDARD.encode(&bytes)),
+                &format!("data:image/png;base64,{}", base64img(img).await),
                 -1,
             )
             .await;

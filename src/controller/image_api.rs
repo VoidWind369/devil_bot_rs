@@ -9,7 +9,7 @@ use axum::Router;
 use image::ImageFormat;
 
 async fn get_record(Path(tag): Path<String>) -> impl IntoResponse {
-    let data = Record::new(&tag, 0).await.list_img(50).await;
+    let data = Record::new_json(&tag, '0').await.list_img(50).await;
 
     // 创建一个内存中的缓冲区（Cursor<Vec<u8>）
     let mut buffer = Cursor::new(Vec::new());
