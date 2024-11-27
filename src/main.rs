@@ -38,7 +38,7 @@ async fn main() {
 
 #[tokio::test]
 async fn test() {
-    let a = om_api::record::Record::new("#Y00UQJPJ", "1329997614", 0).await;
+    let a = om_api::record::Record::new("#Y00UQJPJ", 0).await;
     log_info!("{:?}", &a);
     a.list_img(30).await.save("p.png").unwrap();
 }
