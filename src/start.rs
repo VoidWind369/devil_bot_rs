@@ -38,7 +38,7 @@ pub async fn listen(ob_data: OneBotData) {
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(0.00..1000.00);
 
-            if y > 980.00 {
+            if y > 999.90 {
                 let api = zn_api().await;
                 send_msg(
                     SendMessageType::Group,
