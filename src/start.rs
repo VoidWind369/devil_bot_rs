@@ -24,7 +24,10 @@ pub async fn listen(ob_data: OneBotData) {
     // *******************群聊消息*******************
     if let Some(group) = ob_data.group_id {
         log_info!("消息 {}", &msg);
-        if msg.eq("指令") {
+
+        let mut rng = rand::thread_rng();
+        let z = rng.gen_range(0.00..1000.00);
+        if msg.eq("指令") && z > 800.00 {
             let api = zn_api().await;
             send_msg(
                 SendMessageType::Group,
@@ -55,7 +58,11 @@ pub async fn listen(ob_data: OneBotData) {
         if msg.starts_with("查询日记#") {
             let mut split_str = msg.split('#').skip(1);
             let tag = split_str.next().unwrap_or_default();
-            let type_str = split_str.next().unwrap_or("0").parse::<char>().unwrap_or_default();
+            let type_str = split_str
+                .next()
+                .unwrap_or("0")
+                .parse::<char>()
+                .unwrap_or_default();
             let img = Record::new_json(tag, type_str).await.list_img(50).await;
             send_msg(
                 SendMessageType::Group,
