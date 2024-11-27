@@ -1,11 +1,15 @@
-use std::env;
 use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
 use crate::om_api::record::Record;
 use crate::util::Config;
-use chrono::{Datelike, Local, NaiveDateTime};
+use base64::Engine;
+use image::ImageBuffer;
+use image::ImageFormat::Png;
 use rand::Rng;
 use reqwest::Client;
 use serde_json::{json, Value};
+use std::io::Cursor;
+use base64::prelude::BASE64_STANDARD;
+use futures_util::SinkExt;
 use void_log::*;
 
 pub async fn listen(ob_data: OneBotData) {
@@ -35,7 +39,7 @@ pub async fn listen(ob_data: OneBotData) {
                 &api,
                 -1,
             )
-                .await;
+            .await;
         } else {
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(0.00..1000.00);
@@ -49,7 +53,7 @@ pub async fn listen(ob_data: OneBotData) {
                     &api,
                     -1,
                 )
-                    .await;
+                .await;
             }
 
             log_info!("{y}")
@@ -57,26 +61,21 @@ pub async fn listen(ob_data: OneBotData) {
         if msg.starts_with("查询日记#") {
             let split_str = msg.split('#');
             let tag = split_str.last().unwrap();
-            tokio::fs::create_dir_all("/cache/record/").await.unwrap();
+            // tokio::fs::create_dir_all("./cache/record/").await.unwrap();
+            let img = Record::new(tag, 0).await.list_img(50).await;
+            // let base64_str = base64::prelude::BASE64_STANDARD_NO_PAD.encode(img.as_bytes());
+            let mut bytes: Vec<u8> = Vec::new();
+            img.write_to(&mut Cursor::new(&mut bytes), Png).unwrap();
             send_msg(
                 SendMessageType::Group,
                 ob_data.user_id,
                 Some(group),
-                &format!("http://localhost:50000/img/get_record/{}", tag),
+                &format!("data:image/png;base64,{}", BASE64_STANDARD.encode(&bytes)),
                 -1,
             )
-                .await;
+            .await;
         }
     }
-}
-
-fn to_native_dt(time_str: &str) -> NaiveDateTime {
-    let full_str = format!("{}-{time_str}", Local::now().year());
-    let fmt = "%Y-%m月%d号 %H:%M";
-    NaiveDateTime::parse_from_str(&full_str, fmt).unwrap_or_else(|e| {
-        log_warn!("Format Time Error {e}");
-        Default::default()
-    })
 }
 
 async fn zn_api() -> String {
@@ -101,41 +100,4 @@ async fn get_comfy(text: String) -> String {
     log_info!("{:?}{:?}", response.status(), response.headers());
     let res = response.json::<String>().await.unwrap();
     res
-}
-
-async fn set_time(url: &str, json: Value) -> String {
-    let response = Client::new()
-        .post(format!("{url}/setTime"))
-        .json(&json)
-        .send()
-        .await
-        .unwrap();
-    format!(
-        "{}",
-        response.text().await.unwrap_or("没有更新".to_string())
-    )
-}
-
-async fn set_xin() {
-    let config = Config::get().await;
-    let url = config.api.unwrap_or_default().url.unwrap_or_default();
-    let response = Client::new()
-        .get(format!("{url}/setXm"))
-        .send()
-        .await
-        .unwrap();
-    log_info!(
-        "鑫盟{}",
-        response.text().await.unwrap_or("没有更新".to_string())
-    )
-}
-
-fn _formal_fwa(string: String) -> String {
-    //FWA 开搜时间
-    //Saturday, January 20, 2024 8:40 AM
-    let binding = string.replace("FWA 开搜时间\n", "");
-    let time_str = binding.trim_start_matches(" ");
-    let binding = time_str.replace(',', "");
-    let vec = binding.split(" ").collect::<Vec<&str>>();
-    vec[0].parse().unwrap()
 }

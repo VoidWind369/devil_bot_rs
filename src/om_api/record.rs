@@ -106,7 +106,11 @@ impl Record {
     }
 
     pub async fn list_img(self, size: usize) -> DynamicImage {
-        let data = self.data[0..size].to_vec();
+        let data = if self.data.len() < size {
+            self.data
+        } else {
+            self.data[0..size].to_vec()
+        };
 
         let mut img_top = open("static/image/record/top_0727.png").unwrap();
         let img_bottom = open("static/image/record/bottom_0727.png").unwrap();
@@ -128,10 +132,13 @@ impl Record {
         let font = FontArc::try_from_slice(font_data).unwrap();
         let font_num = FontArc::try_from_slice(font_num_data).unwrap();
 
-        // let font_hei = FontArc::try_from_slice(include_bytes!("simhei.ttf"));
-
         // 本方标签
-        ImageText::new(&data[0].clone().tag.unwrap(), &font, 45.0)
+        let data0tag = if let Some(data0) = data.first().cloned() {
+            data0.tag.unwrap()
+        } else {
+            "无数据".to_string()
+        };
+        ImageText::new(&data0tag, &font, 45.0)
             .set_axis(380, 165)
             .set_aligns(vec![Align::Horizontally])
             .draw(&mut img_top);

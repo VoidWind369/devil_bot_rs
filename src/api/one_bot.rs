@@ -110,15 +110,20 @@ pub async fn send_msg(
     let config = Config::get().await;
     let url = format!("{}/send_msg", config.bot.unwrap().url.unwrap());
 
-    let message = if at < 0 {
-        if text.starts_with("file://") || text.starts_with("http://") || text.starts_with("https://") {
+    let message = if text.starts_with("file://")
+        || text.starts_with("http://")
+        || text.starts_with("https://")
+        || text.starts_with("base64://")
+        || text.starts_with("data:image/png;base64")
+    {
+        if at < 0 {
             vec![send_image(text)]
         } else {
-            vec![send_text(text)]
+            vec![send_at(at), send_image(text)]
         }
     } else {
-        if text.starts_with("file://") || text.starts_with("http://") || text.starts_with("https://") {
-            vec![send_at(at), send_image(text)]
+        if at < 0 {
+            vec![send_text(text)]
         } else {
             vec![send_at(at), send_text(&format!(" {text}"))]
         }
