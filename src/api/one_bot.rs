@@ -139,7 +139,6 @@ pub async fn send_msg(
         message,
         auto_escape: None,
     };
-    log_info!("{:?}", &send);
     let response = Client::new().post(url).json(&send).send().await;
     match response {
         Ok(re) => {
