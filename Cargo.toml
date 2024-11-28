@@ -19,7 +19,7 @@ sqlx = { version = "0.8.2", features = ["runtime-tokio", "json", "chrono", "mysq
 rand = "0.8.5"
 chrono = { version = "0.4.38", features = ["serde"] }
 image = { version = "0.25.5", features = ["serde", "webp", "png"] }
-image-base64 = "*"
+tiny-skia = { version = "0.11.4" }
 imageproc = "0.25.0"
 ab_glyph = { version = "0.2.29", features = ["variable-fonts"] }
 jsonwebtoken = "9.3.0"

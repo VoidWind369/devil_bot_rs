@@ -8,11 +8,12 @@ use image::{open, ColorType, DynamicImage, ImageFormat, Rgba};
 use imageproc::definitions::HasWhite;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::header::HeaderMap;
-use reqwest::{Client, Response, Url};
+use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tiny_skia::{Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap, Point, SpreadMode, Transform};
 use void_log::log_info;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -264,4 +265,64 @@ pub async fn base64img(dynamic_image: DynamicImage) -> String {
         .write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)
         .unwrap();
     BASE64_STANDARD.encode(&bytes)
+}
+
+// 图形元素
+fn img_top() {
+    let width = 500;
+    let height = 300;
+
+    // 创建一个 Pixmap 用来渲染
+    let mut pixmap = Pixmap::new(width, height).unwrap();
+
+    // 创建路径
+    let path = create_rounded_rect_path(50.0, 50.0, 400.0, 200.0, 30.0);
+
+    // 创建渐变色
+    let mut paint = Paint::default();
+    paint.anti_alias = false;
+    paint.shader = LinearGradient::new(
+        Point::from_xy(100.0, 100.0),
+        Point::from_xy(900.0, 900.0),
+        vec![
+            GradientStop::new(0.0, Color::from_rgba8(50, 127, 150, 200)),
+            GradientStop::new(1.0, Color::from_rgba8(220, 140, 75, 180)),
+        ],
+        SpreadMode::Pad,
+        Transform::identity(),
+    )
+        .unwrap();
+
+    // 绘制路径到 Pixmap 上
+    pixmap.fill_path(
+        &path.unwrap(),
+        &paint,
+        FillRule::Winding,
+        Transform::identity(),
+        None,
+    );
+
+    // 保存为 PNG
+    pixmap.save_png("rounded_rect.png").unwrap();
+    println!("圆角矩形已成功保存为 rounded_rect.png")
+}
+
+fn create_rounded_rect_path(x: f32, y: f32, width: f32, height: f32, radius: f32) -> Option<Path> {
+    let mut builder = PathBuilder::new();
+    builder.move_to(x + radius, y);
+    builder.line_to(x + width - radius, y);
+    builder.quad_to(x + width, y, x + width, y + radius);
+    builder.line_to(x + width, y + height - radius);
+    builder.quad_to(x + width, y + height, x + width - radius, y + height);
+    builder.line_to(x + radius, y + height);
+    builder.quad_to(x, y + height, x, y + height - radius);
+    builder.line_to(x, y + radius);
+    builder.quad_to(x, y, x + radius, y);
+    builder.close();
+    builder.finish()
+}
+
+#[tokio::test]
+async fn test() {
+    img_top()
 }
