@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tiny_skia::{Color, Paint, Pixmap, PixmapPaint, Transform};
+use tiny_skia::{Color, Pixmap};
 use void_log::log_info;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -135,11 +135,13 @@ impl Record {
         };
         log_info!("Records Data {:?}", &data);
 
-        let mut img_top = open("static/image/record/top_0727.png").unwrap();
-        let img_bottom = open("static/image/record/bottom_0727.png").unwrap();
-        let img_win = open("static/image/record/center_win_0730.png").unwrap();
-        let img_lose = open("static/image/record/center_lose_0730.png").unwrap();
-        let img_fail = open("static/image/record/center_fail_0730.png").unwrap();
+        let mut img_top = open("static/image/record/top_0727.png").unwrap().to_rgba8();
+        let img_bottom = open("static/image/record/bottom_0727.png")
+            .unwrap()
+            .to_rgba8();
+        let img_win = body_win().await.unwrap();
+        let img_lose = body_lose().await.unwrap();
+        let img_fail = body_fail().await.unwrap();
 
         let wight = img_win.width();
         let top_height = img_top.height();
@@ -150,10 +152,12 @@ impl Record {
 
         let mut base = DynamicImage::new(wight, height, ColorType::Rgba8);
 
-        let font_data = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
-        let font_num_data = include_bytes!("../../static/fonts/FZSHHJW.TTF");
-        let font = FontArc::try_from_slice(font_data).unwrap();
-        let font_num = FontArc::try_from_slice(font_num_data).unwrap();
+        let source_han_sans_cn = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
+        let fz_shh_jw = include_bytes!("../../static/fonts/FZSHHJW.TTF");
+        let fzy3jw = include_bytes!("../../static/fonts/FZY3JW.TTF");
+        let source_han_sans_cn = FontArc::try_from_slice(source_han_sans_cn).unwrap();
+        let fz_shh_jw = FontArc::try_from_slice(fz_shh_jw).unwrap();
+        let fzy3hjw = FontArc::try_from_slice(fzy3jw).unwrap();
 
         // 本方标签
         let data0tag = if let Some(data0) = data.first().cloned() {
@@ -161,7 +165,7 @@ impl Record {
         } else {
             "无数据".to_string()
         };
-        ImageText::new(&data0tag, &font, 45.0)
+        ImageText::new(&data0tag, &source_han_sans_cn, 45.0)
             .set_axis(380, 165)
             .set_color(Rgba([65, 40, 145, 255]))
             .set_aligns(vec![Align::Horizontally])
@@ -183,24 +187,36 @@ impl Record {
             let y = top_height + list_height * i as u32;
 
             // 对方部落标签
-            ImageText::new(&opponent_clan.tag.unwrap_or_default(), &font, font_size)
-                .set_axis(200, 30)
-                .set_color(text_color)
-                .set_aligns(vec![Align::Horizontally])
-                .draw(&mut img);
+            ImageText::new(
+                &opponent_clan.tag.unwrap_or_default(),
+                &source_han_sans_cn,
+                font_size,
+            )
+            .set_axis(200, 30)
+            .set_color(text_color)
+            .set_aligns(vec![Align::Horizontally])
+            .draw(&mut img);
 
             // 对方部落联盟
-            ImageText::new(&opponent_clan.union.unwrap_or_default(), &font, font_size)
-                .set_axis(200, body_down_y)
-                .set_color(Rgba([200, 254, 255, 255]))
-                .set_aligns(vec![Align::Horizontally])
-                .draw(&mut img);
+            ImageText::new(
+                &opponent_clan.union.unwrap_or_default(),
+                &source_han_sans_cn,
+                font_size,
+            )
+            .set_axis(200, body_down_y)
+            .set_color(Rgba([200, 254, 255, 255]))
+            .set_aligns(vec![Align::Horizontally])
+            .draw(&mut img);
 
             // 对方部落名字
-            ImageText::new(&opponent_clan.name.unwrap_or_default(), &font, font_size)
-                .set_axis(320, 30)
-                .set_color(Rgba::white())
-                .draw(&mut img);
+            ImageText::new(
+                &opponent_clan.name.unwrap_or_default(),
+                &source_han_sans_cn,
+                font_size,
+            )
+            .set_axis(320, 30)
+            .set_color(Rgba::white())
+            .draw(&mut img);
 
             // 匹配状态
             let state_time = format!(
@@ -208,37 +224,40 @@ impl Record {
                 &datum.state.unwrap_or_default(),
                 &datum.time.unwrap_or_default()
             );
-            ImageText::new(&state_time, &font, font_size)
+            ImageText::new(&state_time, &source_han_sans_cn, font_size)
                 .set_axis(320, body_down_y)
                 .set_color(Rgba::white())
                 .draw(&mut img);
 
             // 上轮积分
             let historical_score = datum.historical_score.unwrap_or_default().to_string();
-            ImageText::new(&historical_score, &font, font_size)
+            let score_change = datum.score_change.unwrap_or_default();
+            let score = score_change.score.unwrap_or_default().to_string();
+            ImageText::new("积分              当场", &fzy3hjw, font_size - 6.0)
+                .set_axis(780, body_down_y + 7)
+                .set_color(text_color)
+                .draw(&mut img);
+            ImageText::new(&historical_score, &source_han_sans_cn, font_size)
                 .set_axis(845, body_down_y + 2)
                 .set_color(text_color)
                 .set_aligns(vec![Align::Horizontally])
                 .draw(&mut img);
-
             // 积分变动
-            let score_change = datum.score_change.unwrap_or_default();
-            let score = score_change.score.unwrap_or_default().to_string();
-            ImageText::new(&score, &font, font_size)
+            ImageText::new(&score, &source_han_sans_cn, font_size)
                 .set_axis(950, body_down_y + 2)
                 .set_color(text_color)
                 .set_aligns(vec![Align::Horizontally])
                 .draw(&mut img);
 
             // 输赢
-            ImageText::new(&result, &font, font_size + 2.0)
+            ImageText::new(&result, &source_han_sans_cn, font_size + 2.0)
                 .set_axis(1040, 55)
                 .set_color(Rgba::white())
                 .set_aligns(vec![Align::Horizontally, Align::Vertically])
                 .draw(&mut img);
 
             // 序号
-            ImageText::new(&(i + 1).to_string(), &font_num, 52.0)
+            ImageText::new(&(i + 1).to_string(), &fz_shh_jw, 52.0)
                 .set_axis(52, 48)
                 .set_color(Rgba([255, 210, 130, 255]))
                 .set_aligns(vec![Align::Horizontally, Align::Vertically])
@@ -327,33 +346,39 @@ impl RectRound {
     }
 }
 
-async fn body_win() -> Pixmap {
+async fn body_win() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(0, 104, 55, 255);
-    RectRound::body()
+    let body = RectRound::body()
         .set_start_color(Color::from_rgba8(0, 146, 69, 255))
         .set_end_color(main_color)
-        .draw_ele(main_color)
+        .draw_ele(main_color);
+    RgbaImage::from_raw(body.width(), body.height(), body.take())
 }
 
-async fn body_lose() -> Pixmap {
+async fn body_lose() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(158, 0, 93, 255);
-    RectRound::body()
+    let body = RectRound::body()
         .set_start_color(Color::from_rgba8(193, 39, 45, 255))
         .set_end_color(main_color)
-        .draw_ele(main_color)
+        .draw_ele(main_color);
+    RgbaImage::from_raw(body.width(), body.height(), body.take())
 }
 
-async fn body_fail() -> Pixmap {
+async fn body_fail() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(51, 51, 51, 255);
-    RectRound::body()
+    let body = RectRound::body()
         .set_start_color(Color::from_rgba8(77, 77, 77, 255))
         .set_end_color(main_color)
-        .draw_ele(main_color)
+        .draw_ele(main_color);
+    RgbaImage::from_raw(body.width(), body.height(), body.take())
 }
 
 #[tokio::test]
 async fn test() {
-    body_win().await.save_png("win.png").unwrap();
-    body_lose().await.save_png("lose.png").unwrap();
-    body_fail().await.save_png("fail.png").unwrap();
+    Record::new_json("#2PVQ9UY2Q", '2')
+        .await
+        .list_img(50)
+        .await
+        .save("clan.png")
+        .unwrap()
 }

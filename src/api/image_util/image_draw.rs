@@ -1,8 +1,8 @@
 use ab_glyph::{FontArc, PxScale};
-use image::{DynamicImage, GenericImageView, Rgba};
+use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
 use image::imageops::overlay;
 use imageproc::definitions::HasBlack;
-use imageproc::drawing::{draw_text_mut, text_size};
+use imageproc::drawing::{draw_text_mut, text_size, Canvas};
 
 pub struct ImageText<'a> {
     text: String,       // 文本
@@ -16,7 +16,7 @@ pub struct ImageText<'a> {
 }
 
 pub struct ImagePicture {
-    picture: DynamicImage, // 图片
+    picture: RgbaImage, // 图片
     height: u32,           // 高
     p_x: i32,              // 横轴
     p_y: i32,              // 纵轴
@@ -105,7 +105,7 @@ impl<'a> ImageText<'a> {
         self
     }
 
-    pub fn draw(self, rgba_image: &mut DynamicImage) {
+    pub fn draw(self, rgba_image: &mut RgbaImage) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
         let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
@@ -140,7 +140,7 @@ impl ImagePicture {
     /// ```
     ///
     /// ```
-    pub fn new(picture: DynamicImage, height: u32) -> Self {
+    pub fn new(picture: RgbaImage, height: u32) -> Self {
         let height = if height == 0 {
             picture.height()
         } else {
@@ -178,11 +178,12 @@ impl ImagePicture {
 
         let picture_weight = &self.height * pixel * &self.picture.width() / &self.picture.height();
         let picture_height = &self.height * pixel;
-        let img = &self.picture.resize(
-            picture_weight,
-            picture_height,
-            image::imageops::FilterType::Lanczos3,
-        );
+        // let img = &self.picture.resize(
+        //     picture_weight,
+        //     picture_height,
+        //     image::imageops::FilterType::Lanczos3,
+        // );
+        let img = &self.picture;
 
         // 居中判断
         for align in &self.aligns {
