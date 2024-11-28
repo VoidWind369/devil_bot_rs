@@ -1,12 +1,12 @@
 use ab_glyph::{FontArc, PxScale};
-use image::imageops::overlay;
 use image::{DynamicImage, GenericImageView, Rgba};
+use image::imageops::overlay;
 use imageproc::definitions::HasBlack;
 use imageproc::drawing::{draw_text_mut, text_size};
 
 pub struct ImageText<'a> {
     text: String,       // 文本
-    font: &'a FontArc,      // 字体
+    font: &'a FontArc,  // 字体
     scale: PxScale,     // 字体大小
     color: Rgba<u8>,    // 颜色
     p_x: i32,           // 横轴

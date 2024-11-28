@@ -1,10 +1,10 @@
-use crate::api::image_util::{Align, ImagePicture, ImageText};
+use crate::api::image_util::{Align, ImagePicture, ImageText, RectRadius, RectRound};
 use crate::util::Config;
 use ab_glyph::FontArc;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use chrono::NaiveDateTime;
-use image::{open, ColorType, DynamicImage, ImageFormat, Rgba};
+use image::{open, ColorType, DynamicImage, ImageFormat, Rgba, RgbaImage};
 use imageproc::definitions::HasWhite;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::header::HeaderMap;
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tiny_skia::{Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap, Point, SpreadMode, Transform};
+use tiny_skia::{Color, Paint, Pixmap, PixmapPaint, Transform};
 use void_log::log_info;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -267,62 +267,93 @@ pub async fn base64img(dynamic_image: DynamicImage) -> String {
     BASE64_STANDARD.encode(&bytes)
 }
 
-// 图形元素
-fn img_top() {
-    let width = 500;
-    let height = 300;
+impl RectRound {
+    fn body() -> Self {
+        Self::new(1060, 100).set_radius(RectRadius::new(10.0))
+    }
 
-    // 创建一个 Pixmap 用来渲染
-    let mut pixmap = Pixmap::new(width, height).unwrap();
+    fn label() -> Self {
+        Self::new(200, 35)
+    }
 
-    // 创建路径
-    let path = create_rounded_rect_path(50.0, 50.0, 400.0, 200.0, 30.0);
+    fn right() -> Self {
+        Self::new(60, 50).set_radius(RectRadius::new(20.0))
+    }
 
-    // 创建渐变色
-    let mut paint = Paint::default();
-    paint.anti_alias = false;
-    paint.shader = LinearGradient::new(
-        Point::from_xy(100.0, 100.0),
-        Point::from_xy(900.0, 900.0),
-        vec![
-            GradientStop::new(0.0, Color::from_rgba8(50, 127, 150, 200)),
-            GradientStop::new(1.0, Color::from_rgba8(220, 140, 75, 180)),
-        ],
-        SpreadMode::Pad,
-        Transform::identity(),
-    )
-        .unwrap();
+    fn right_bg() -> Self {
+        Self::new(70, 70)
+            .set_color(Color::from_rgba8(228, 215, 255, 255))
+            .set_radius(RectRadius::new_left(30.0))
+    }
 
-    // 绘制路径到 Pixmap 上
-    pixmap.fill_path(
-        &path.unwrap(),
-        &paint,
-        FillRule::Winding,
-        Transform::identity(),
-        None,
-    );
+    fn body_background() -> Self {
+        Self::new(1080, 110).set_color(Color::from_rgba8(228, 215, 255, 255))
+    }
 
-    // 保存为 PNG
-    pixmap.save_png("rounded_rect.png").unwrap();
-    println!("圆角矩形已成功保存为 rounded_rect.png")
+    fn left_top_label() -> Self {
+        Self::label()
+            .set_color(Color::from_rgba8(242, 242, 242, 200))
+            .set_radius(RectRadius::new_top(10.0))
+    }
+
+    fn left_bottom_label() -> Self {
+        Self::label()
+            .set_color(Color::from_rgba8(242, 242, 242, 76))
+            .set_radius(RectRadius::new_bottom(10.0))
+    }
+
+    fn right_bottom_label() -> Self {
+        Self::new(215, 28)
+            .set_color(Color::from_rgba8(242, 242, 242, 230))
+            .set_radius(RectRadius::new(10.0))
+    }
+
+    fn draw_ele(self, right_color: Color) -> Pixmap {
+        let mut bg = RectRound::body_background().create_pixmap();
+
+        let mut right = Self::new(60, 50)
+            .set_radius(RectRadius::new(20.0))
+            .set_color(right_color);
+
+        // 将元素绘制到body
+        let padding = 10;
+        self.draw(&mut bg, padding, padding);
+        RectRound::left_top_label().draw(&mut bg, padding + 90, padding + 15);
+        RectRound::left_bottom_label().draw(&mut bg, padding + 90, padding + 50);
+        RectRound::right_bottom_label().draw(&mut bg, padding + 757, padding + 57);
+        RectRound::right_bg().draw(&mut bg, padding + 990, padding + 15);
+        right.draw(&mut bg, padding + 1000, padding + 25);
+        bg
+    }
 }
 
-fn create_rounded_rect_path(x: f32, y: f32, width: f32, height: f32, radius: f32) -> Option<Path> {
-    let mut builder = PathBuilder::new();
-    builder.move_to(x + radius, y);
-    builder.line_to(x + width - radius, y);
-    builder.quad_to(x + width, y, x + width, y + radius);
-    builder.line_to(x + width, y + height - radius);
-    builder.quad_to(x + width, y + height, x + width - radius, y + height);
-    builder.line_to(x + radius, y + height);
-    builder.quad_to(x, y + height, x, y + height - radius);
-    builder.line_to(x, y + radius);
-    builder.quad_to(x, y, x + radius, y);
-    builder.close();
-    builder.finish()
+async fn body_win() -> Pixmap {
+    let main_color = Color::from_rgba8(0, 104, 55, 255);
+    RectRound::body()
+        .set_start_color(Color::from_rgba8(0, 146, 69, 255))
+        .set_end_color(main_color)
+        .draw_ele(main_color)
+}
+
+async fn body_lose() -> Pixmap {
+    let main_color = Color::from_rgba8(158, 0, 93, 255);
+    RectRound::body()
+        .set_start_color(Color::from_rgba8(193, 39, 45, 255))
+        .set_end_color(main_color)
+        .draw_ele(main_color)
+}
+
+async fn body_fail() -> Pixmap {
+    let main_color = Color::from_rgba8(51, 51, 51, 255);
+    RectRound::body()
+        .set_start_color(Color::from_rgba8(77, 77, 77, 255))
+        .set_end_color(main_color)
+        .draw_ele(main_color)
 }
 
 #[tokio::test]
 async fn test() {
-    img_top()
+    body_win().await.save_png("win.png").unwrap();
+    body_lose().await.save_png("lose.png").unwrap();
+    body_fail().await.save_png("fail.png").unwrap();
 }
