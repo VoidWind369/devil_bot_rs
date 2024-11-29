@@ -374,11 +374,16 @@ async fn body_fail() -> Option<RgbaImage> {
 }
 
 #[tokio::test]
-async fn test() {
+async fn test1() {
     Record::new_json("#2PVQ9UY2Q", '2')
         .await
         .list_img(50)
         .await
         .save("clan.png")
         .unwrap()
+}
+
+#[tokio::test]
+async fn test2() {
+    body_lose().await.unwrap().save("body_lose.png").unwrap();
 }
