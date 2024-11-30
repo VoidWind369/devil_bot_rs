@@ -95,11 +95,13 @@ fn flower_logo() -> Pixmap {
     let bg_xy = (circle_r - bg_size / 2.0) as i32;
     let co_xy = (circle_r - co_size / 2.0) as i32;
 
-    let mut bg = Circle::new(circle_r).create_pixmap();
+    let mut bg = Circle::new(circle_r)
+        .set_color(Color::from_rgba8(255, 255, 255, 60))
+        .create_pixmap();
 
     Flower::new()
         .set_size(bg_size)
-        .set_color(Color::from_rgba8(165, 80, 40, 255))
+        .set_color(Color::from_rgba8(140, 198, 63, 255))
         .draw(&mut bg, bg_xy, bg_xy);
 
     Flower::new()
