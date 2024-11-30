@@ -1,21 +1,34 @@
 use crate::api::image_util::Draw;
-use tiny_skia::{Color, FillRule, Paint, Path, PathBuilder, Pixmap, Transform};
+use tiny_skia::{Color, FillRule, GradientStop, Paint, Path, PathBuilder, Pixmap, Point, RadialGradient, SpreadMode, Transform};
 
 pub struct Circle {
     radius: f32,
-    color: Color,
+    start_color: Color,
+    end_color: Color,
 }
 
 impl Circle {
     pub fn new(radius: f32) -> Self {
         Self {
             radius,
-            color: Color::WHITE,
+            start_color: Color::WHITE,
+            end_color: Color::WHITE,
         }
     }
 
     pub fn set_color(mut self, color: Color) -> Circle {
-        self.color = color;
+        self.start_color = color;
+        self.end_color = color;
+        self
+    }
+
+    pub fn set_start_color(mut self, start_color: Color) -> Self {
+        self.start_color = start_color;
+        self
+    }
+
+    pub fn set_end_color(mut self, end_color: Color) -> Self {
+        self.end_color = end_color;
         self
     }
 
@@ -35,7 +48,22 @@ impl Draw for Circle {
         // 创建渐变色
         let mut paint = Paint::default();
         paint.anti_alias = true;
-        paint.set_color(self.color);
+        if self.start_color == self.end_color {
+            paint.set_color(self.start_color);
+        } else {
+            paint.shader = RadialGradient::new(
+                Point::from_xy(self.radius, self.radius),
+                Point::from_xy(self.radius, self.radius),
+                self.radius,
+                vec![
+                    GradientStop::new(0.0, self.start_color),
+                    GradientStop::new(1.0, self.end_color),
+                ],
+                SpreadMode::Pad,
+                Transform::identity(),
+            )
+                .unwrap();
+        }
 
         // 创建路径
         let path = self.builder();

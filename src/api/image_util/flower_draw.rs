@@ -122,17 +122,19 @@ impl Draw for Flower {
 
 /// # 画朵花
 fn flower_logo() -> Pixmap {
-    let (circle_r, bg_size, co_size, co1_size) = (70.0, 130.0, 116.0, 75.0);
+    let (circle_r, bg_size, co_size, co1_size) = (70.0, 130.0, 116.0, 95.0);
     let bg_xy = (circle_r - bg_size / 2.0) as i32;
     let co_xy = (circle_r - co_size / 2.0) as i32;
     let co_xy1 = (circle_r - co1_size / 2.0) as i32;
 
     let mut bg = Circle::new(circle_r)
-        .set_color(Color::from_rgba8(255, 255, 255, 100))
+        .set_start_color(Color::from_rgba8(255, 255, 255, 0))
+        .set_end_color(Color::from_rgba8(255, 255, 255, 100))
         .create_pixmap();
 
     Circle::new(circle_r - 20.0)
-        .set_color(Color::from_rgba8(46, 49, 146, 200))
+        .set_start_color(Color::from_rgba8(46, 49, 146, 200))
+        .set_end_color(Color::from_rgba8(46, 49, 146, 160))
         .draw(&mut bg, 20, 20);
 
     Flower::new()
@@ -144,15 +146,15 @@ fn flower_logo() -> Pixmap {
     Flower::new()
         .set_size(co_size)
         .set_display(6.0)
-        .set_start_color(Color::from_rgba8(251, 176, 59, 150))
-        .set_end_color(Color::from_rgba8(240, 90, 36, 150))
+        .set_start_color(Color::from_rgba8(40, 170, 226, 130))
+        .set_end_color(Color::from_rgba8(0, 255, 255, 170))
         .draw(&mut bg, co_xy, co_xy);
 
     Flower::new()
         .set_size(co1_size)
         .set_display(10.0)
-        .set_start_color(Color::from_rgba8(240, 90, 36, 255))
-        .set_end_color(Color::from_rgba8(240, 90, 36, 100))
+        .set_start_color(Color::from_rgba8(0, 104, 55, 100))
+        .set_end_color(Color::from_rgba8(0, 255, 255, 255))
         .draw(&mut bg, co_xy1, co_xy1);
     bg
 }
