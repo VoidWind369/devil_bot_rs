@@ -2,7 +2,7 @@ use crate::api::image_util::{
     draw_logo, Align, Draw, ImagePicture, ImageText, RectRadius, RectRound,
 };
 use crate::util::Config;
-use ab_glyph::{Font, FontArc};
+use ab_glyph::FontArc;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use chrono::NaiveDateTime;
@@ -160,8 +160,8 @@ impl Record {
         let fzy3jw = FontArc::try_from_slice(fzy3jw).unwrap();
 
         // 标题
-        ImageText::new("Orange", &fz_shh_jw, 85.0)
-            .set_axis(241, 60)
+        ImageText::new("Orange", &fz_shh_jw, 88.0)
+            .set_axis(241, 55)
             .set_color(Rgba([251, 176, 59, 255]))
             .draw_with(&mut img_top, 5);
         ImageText::new("对战日记", &fzy3jw, 72.0)
@@ -279,8 +279,8 @@ impl Record {
         }
 
         ImageText::new("橘子科技提供技术支持", &fz_shh_jw, 30.0)
-            .set_axis(540, 30)
-            .set_aligns(vec![Align::Horizontally])
+            .set_axis(540, 37)
+            .set_aligns(vec![Align::Horizontally, Align::Vertically])
             .draw_with(&mut img_bottom, 16);
 
         // 底部写入base
@@ -344,7 +344,7 @@ impl RectRound {
     fn draw_ele(self, right_color: Color) -> Pixmap {
         let mut bg = RectRound::body_background().create_pixmap();
 
-        let mut right = Self::new(60, 50)
+        let right = Self::new(60, 50)
             .set_radius(RectRadius::new(20.0))
             .set_color(right_color);
 

@@ -1,6 +1,6 @@
-use crate::api::image_util::{Circle, Direction, Draw};
+use crate::api::image_util::{Circle, Draw};
 use tiny_skia::{
-    Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap, PixmapPaint,
+    Color, FillRule, GradientStop, Paint, Path, PathBuilder, Pixmap, PixmapPaint,
     Point, RadialGradient, SpreadMode, Transform,
 };
 
@@ -134,7 +134,7 @@ fn flower_logo() -> Pixmap {
 
     Circle::new(circle_r - 20.0)
         .set_start_color(Color::from_rgba8(46, 49, 146, 200))
-        .set_end_color(Color::from_rgba8(46, 49, 146, 160))
+        .set_end_color(Color::from_rgba8(46, 49, 146, 150))
         .draw(&mut bg, 20, 20);
 
     Flower::new()

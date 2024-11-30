@@ -34,13 +34,13 @@ pub struct SatoriDataBodyInfo {
     pub content: Option<String>,
 }
 
-pub async fn send_group_msg(group_id: &str, text: &str, at: i64) {
+pub async fn _send_group_msg(group_id: &str, text: &str, at: i64) {
     let api = Config::get().await.bot.unwrap_or_default();
     let url = format!("{}/message.create", &api.url.unwrap());
 
     let message = match at {
         -1 => text.to_string(),
-        _ => send_at(at, text)
+        _ => _send_at(at, text)
     };
     let send = json!({
         "channel_id": group_id,
@@ -61,6 +61,6 @@ pub async fn send_group_msg(group_id: &str, text: &str, at: i64) {
     }
 }
 
-fn send_at(id: i64, content: &str) -> String {
+fn _send_at(id: i64, content: &str) -> String {
     format!("<at id=\"{id}\"/> {content}")
 }

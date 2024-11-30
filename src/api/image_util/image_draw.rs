@@ -1,10 +1,8 @@
 use ab_glyph::{point, Font, FontArc, PxScale};
 use image::imageops::overlay;
-use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
+use image::{DynamicImage, Rgba, RgbaImage};
 use imageproc::definitions::HasWhite;
-use imageproc::drawing::{draw_text_mut, text_size, Canvas};
-use tiny_skia::BlendMode::Color;
-use void_log::log_info;
+use imageproc::drawing::{draw_text_mut, text_size};
 
 pub struct ImageText<'a> {
     text: String,       // 文本
@@ -34,27 +32,6 @@ pub enum Align {
     Bottom,       // 下对齐
     Left,         // 左对齐
     Right,        // 右对齐
-}
-
-impl Align {
-    fn new(&self, mut x: i32, mut y: i32, (weight, height): (u32, u32)) -> (i32, i32) {
-        match &self {
-            Align::Horizontally => {
-                x = x - weight as i32 / 2;
-            }
-            Align::Vertically => {
-                y = y - height as i32 / 2;
-            }
-            Align::Bottom => {
-                y = y - height as i32;
-            }
-            Align::Right => {
-                x = x - weight as i32;
-            }
-            _ => {}
-        }
-        (x, y)
-    }
 }
 
 impl<'a> ImageText<'a> {
@@ -127,29 +104,66 @@ impl<'a> ImageText<'a> {
         );
     }
 
-    pub fn draw_with(mut self, rgba_image: &mut RgbaImage, letter_spacing: i32) {
+    pub fn draw_with(self, rgba_image: &mut RgbaImage, letter_spacing: i32) {
         let pixel = &self.pixel / 72;
         let (width, height) = rgba_image.dimensions();
         let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
-        let text_scale = text_size(self.scale, self.font, &self.text);
-        if self.aligns.contains(&Align::Horizontally) {
-            x -= text_scale.0 as i32 / 2;
+        let (t_wight, t_height) = text_size(self.scale, self.font, &self.text);
+        let text_wight = t_wight as i32 + letter_spacing * (self.text.chars().count() - 1) as i32;
+
+        // 居中判定
+        for align in &self.aligns {
+            (x, y) = align.new(x, y, (text_wight as u32, t_height))
         }
-        if self.aligns.contains(&Align::Vertically) {
-            y -= text_scale.1 as i32 / 2;
-        }
+
         // 遍历每个字符并渲染
         for c in self.text.chars() {
             let t = c.to_string();
             let c_scale = text_size(self.scale, self.font, &t);
-            for align in &self.aligns {
-                (x, y) = align.new(x, y, c_scale)
-            }
             x = x.clamp(0, (width - 1) as i32);
             y = y.clamp(0, (height - 1) as i32);
             // 在图像上绘制文字
             draw_text_mut(rgba_image, self.color, x, y, self.scale, &self.font, &t);
             x += c_scale.0 as i32 + letter_spacing;
+        }
+    }
+
+    pub fn draw_chars(self, rgba_image: &mut RgbaImage, letter_spacing: u32) {
+        // let letter_spacing = 10.0;
+        let (mut width, _) = text_size(self.scale, self.font, &self.text);
+        width += letter_spacing * (self.text.chars().count() - 1) as u32;
+
+        let width_spacing = if self.aligns.contains(&Align::Horizontally) {
+            width / 2
+        } else {
+            0
+        };
+
+        let (mut x_position, ty) = (self.p_x as f32, self.p_y as f32);
+        for char in self.text.chars() {
+            let g = self
+                .font
+                .glyph_id(char)
+                .with_scale_and_position(self.scale, point(x_position, ty));
+            if let Some(g) = self.font.outline_glyph(g) {
+                g.draw(|x, y, c| {
+                    // 通过覆盖度决定像素的颜色
+                    let color = Rgba([
+                        (c * 255.0) as u8, // alpha 通过覆盖度控制
+                        (c * 255.0) as u8, // 红色部分
+                        (c * 255.0) as u8, // 绿色部分
+                        255,               // 不透明度
+                    ]);
+
+                    // 将像素 `(x, y)` 绘制为颜色
+                    if x < rgba_image.width() && y < rgba_image.height() {
+                        rgba_image.put_pixel(x + x_position as u32 - width_spacing, y, color);
+                    }
+                })
+            }
+            // 更新 x 坐标，为下一个字符留出空间
+            let (glyph_width, _) = text_size(self.scale, self.font, char.to_string().as_str());
+            x_position += (glyph_width + letter_spacing) as f32; // 字形宽度加上字间距
         }
     }
 }
@@ -221,4 +235,36 @@ impl ImagePicture {
 
         overlay(rgba_image, img, x as i64, y as i64);
     }
+}
+
+impl Align {
+    fn new(&self, mut x: i32, mut y: i32, (weight, height): (u32, u32)) -> (i32, i32) {
+        match &self {
+            Align::Horizontally => {
+                x = x - weight as i32 / 2;
+            }
+            Align::Vertically => {
+                y = y - height as i32 / 2;
+            }
+            Align::Bottom => {
+                y = y - height as i32;
+            }
+            Align::Right => {
+                x = x - weight as i32;
+            }
+            _ => {}
+        }
+        (x, y)
+    }
+}
+
+#[tokio::test]
+async fn test_d_text() {
+    let mut r = RgbaImage::new(400, 400);
+    let f = include_bytes!("../../../static/fonts/FZSHHJW.TTF");
+    let f = FontArc::try_from_slice(f).unwrap();
+    ImageText::new("QAS", &f, 48.0)
+        .set_axis(100, 0)
+        .draw_chars(&mut r, 10);
+    r.save("ll.png").unwrap();
 }

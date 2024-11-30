@@ -34,7 +34,7 @@ pub async fn listen(ob_data: OneBotData) {
                 ob_data.user_id,
                 Some(group),
                 &api,
-                -1,
+                Some(&ob_data.user_id.unwrap().to_string()),
             )
             .await;
         } else {
@@ -48,12 +48,22 @@ pub async fn listen(ob_data: OneBotData) {
                     ob_data.user_id,
                     Some(group),
                     &api,
-                    -1,
+                    None,
                 )
                 .await;
             }
 
             log_info!("{y}")
+        }
+        if at.starts_with(ob_data.self_id.unwrap().to_string().as_str()) {
+            let api = zn_api().await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &api,
+                Some(&ob_data.user_id.unwrap().to_string()),
+            ).await;
         }
         if msg.starts_with("查询日记#") {
             let mut split_str = msg.split('#').skip(1);
@@ -69,7 +79,7 @@ pub async fn listen(ob_data: OneBotData) {
                 ob_data.user_id,
                 Some(group),
                 &format!("data:image/png;base64,{}", base64img(img).await),
-                -1,
+                None,
             )
             .await;
         }

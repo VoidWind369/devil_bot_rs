@@ -16,7 +16,7 @@ pub struct RawMessageJson {
 }
 
 impl RawMessageJson {
-    pub fn format_json(raw_message: &str) -> serde_json::Result<RawMessageJson> {
+    pub fn _format_json(raw_message: &str) -> serde_json::Result<RawMessageJson> {
         let str = raw_message.trim_start_matches("[CQ:json,data=").trim_end_matches("]");
         let json = str
             .replace("\\\"", "\"")

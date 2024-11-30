@@ -105,7 +105,7 @@ pub async fn send_msg(
     user_id: Option<i64>,
     group_id: Option<i64>,
     text: &str,
-    at: i64,
+    at: Option<&str>,
 ) -> String {
     let config = Config::get().await;
     let url = format!("{}/send_msg", config.bot.unwrap().url.unwrap());
@@ -116,16 +116,16 @@ pub async fn send_msg(
         || text.starts_with("base64://")
         || text.starts_with("data:image/png;base64")
     {
-        if at < 0 {
-            vec![send_image(text)]
-        } else {
+        if let Some(at) = at {
             vec![send_at(at), send_image(text)]
+        } else {
+            vec![send_image(text)]
         }
     } else {
-        if at < 0 {
-            vec![send_text(text)]
-        } else {
+        if let Some(at) = at {
             vec![send_at(at), send_text(&format!(" {text}"))]
+        } else {
+            vec![send_text(text)]
         }
     };
     let group_id = match message_type {
@@ -154,13 +154,13 @@ pub async fn send_msg(
     }
 }
 
-pub async fn _send_group_msg(group_id: &str, text: &str, at: i64) {
+pub async fn _send_group_msg(group_id: &str, text: &str, at: Option<&str>) {
     let config = Config::get().await;
     let url = format!("{}/send_group_msg", config.bot.unwrap().url.unwrap());
 
     let message = match at {
-        -1 => vec![send_text(text)],
-        _ => vec![send_at(at), send_text(&format!(" {text}"))],
+        None => vec![send_text(text)],
+        Some(at) => vec![send_at(at), send_text(&format!(" {text}"))],
     };
     let send = SendOneBotGroup {
         user_id: None,
@@ -230,7 +230,7 @@ pub async fn _get_group_member_info(group_id: i64, user_id: i64) -> Value {
     }
 }
 
-pub async fn set_friend_add_request(flag: &str, approve: bool) {
+pub async fn _set_friend_add_request(flag: &str, approve: bool) {
     let config = Config::get().await;
     let url = format!(
         "{}/set_friend_add_request",
@@ -277,9 +277,9 @@ fn send_image(path: &str) -> SendOneBotGroupMessage {
     }
 }
 
-fn send_at(id: i64) -> SendOneBotGroupMessage {
+fn send_at(id: &str) -> SendOneBotGroupMessage {
     match id {
-        0 => SendOneBotGroupMessage {
+        "all" => SendOneBotGroupMessage {
             r#type: "at".to_string(),
             data: SendOneBotGroupMessageData {
                 id: None,
@@ -293,7 +293,7 @@ fn send_at(id: i64) -> SendOneBotGroupMessage {
             r#type: "at".to_string(),
             data: SendOneBotGroupMessageData {
                 id: None,
-                qq: Option::from(id.to_string()),
+                qq: Some(String::from(id.to_string())),
                 name: None,
                 text: None,
                 file: None,
