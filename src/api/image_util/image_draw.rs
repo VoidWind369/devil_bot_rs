@@ -1,8 +1,10 @@
-use ab_glyph::{FontArc, PxScale};
-use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
+use ab_glyph::{point, Font, FontArc, PxScale};
 use image::imageops::overlay;
-use imageproc::definitions::HasBlack;
+use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
+use imageproc::definitions::HasWhite;
 use imageproc::drawing::{draw_text_mut, text_size, Canvas};
+use tiny_skia::BlendMode::Color;
+use void_log::log_info;
 
 pub struct ImageText<'a> {
     text: String,       // 文本
@@ -17,13 +19,14 @@ pub struct ImageText<'a> {
 
 pub struct ImagePicture {
     picture: RgbaImage, // 图片
-    height: u32,           // 高
-    p_x: i32,              // 横轴
-    p_y: i32,              // 纵轴
-    aligns: Vec<Align>,    // 居中
-    pixel: u32,            // dpi
+    height: u32,        // 高
+    p_x: i32,           // 横轴
+    p_y: i32,           // 纵轴
+    aligns: Vec<Align>, // 居中
+    pixel: u32,         // dpi
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Align {
     Horizontally, // 横向居中
     Vertically,   // 纵向居中
@@ -76,7 +79,7 @@ impl<'a> ImageText<'a> {
             text: text.to_string(),
             font,
             scale: PxScale::from(scale),
-            color: Rgba::black(),
+            color: Rgba::white(),
             p_x: 0,
             p_y: 0,
             aligns: vec![],
@@ -122,6 +125,32 @@ impl<'a> ImageText<'a> {
         draw_text_mut(
             rgba_image, self.color, x, y, self.scale, &self.font, &self.text,
         );
+    }
+
+    pub fn draw_with(mut self, rgba_image: &mut RgbaImage, letter_spacing: i32) {
+        let pixel = &self.pixel / 72;
+        let (width, height) = rgba_image.dimensions();
+        let (mut x, mut y) = (self.p_x * pixel as i32, self.p_y * pixel as i32);
+        let text_scale = text_size(self.scale, self.font, &self.text);
+        if self.aligns.contains(&Align::Horizontally) {
+            x -= text_scale.0 as i32 / 2;
+        }
+        if self.aligns.contains(&Align::Vertically) {
+            y -= text_scale.1 as i32 / 2;
+        }
+        // 遍历每个字符并渲染
+        for c in self.text.chars() {
+            let t = c.to_string();
+            let c_scale = text_size(self.scale, self.font, &t);
+            for align in &self.aligns {
+                (x, y) = align.new(x, y, c_scale)
+            }
+            x = x.clamp(0, (width - 1) as i32);
+            y = y.clamp(0, (height - 1) as i32);
+            // 在图像上绘制文字
+            draw_text_mut(rgba_image, self.color, x, y, self.scale, &self.font, &t);
+            x += c_scale.0 as i32 + letter_spacing;
+        }
     }
 }
 

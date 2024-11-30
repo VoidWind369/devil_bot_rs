@@ -20,9 +20,9 @@ rand = "0.8.5"
 chrono = { version = "0.4.38", features = ["serde"] }
 image = { version = "0.25.5", features = ["serde", "webp", "png"] }
 tiny-skia = { version = "0.11.4" }
-imageproc = "0.25.0"
+imageproc = { version = "0.25.0" }
 ab_glyph = { version = "0.2.29", features = ["variable-fonts"] }
 jsonwebtoken = "9.3.0"
-base64 = "0.21.7"
+base64 = "0.22.1"
 
 void_log = { git = "https://gitee.com/orange_union/void_log.git" }

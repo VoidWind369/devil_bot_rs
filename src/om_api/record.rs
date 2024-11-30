@@ -1,10 +1,12 @@
-use crate::api::image_util::{Align, ImagePicture, ImageText, RectRadius, RectRound};
+use crate::api::image_util::{
+    draw_logo, Align, Draw, ImagePicture, ImageText, RectRadius, RectRound,
+};
 use crate::util::Config;
-use ab_glyph::FontArc;
+use ab_glyph::{Font, FontArc};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use chrono::NaiveDateTime;
-use image::{open, ColorType, DynamicImage, ImageFormat, Rgba, RgbaImage};
+use image::{ColorType, DynamicImage, ImageFormat, Rgba, RgbaImage};
 use imageproc::definitions::HasWhite;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::header::HeaderMap;
@@ -135,10 +137,8 @@ impl Record {
         };
         log_info!("Records Data {:?}", &data);
 
-        let mut img_top = open("static/image/record/top_0727.png").unwrap().to_rgba8();
-        let img_bottom = open("static/image/record/bottom_0727.png")
-            .unwrap()
-            .to_rgba8();
+        let mut img_top = top().await.unwrap();
+        let mut img_bottom = bottom().await.unwrap();
         let img_win = body_win().await.unwrap();
         let img_lose = body_lose().await.unwrap();
         let img_fail = body_fail().await.unwrap();
@@ -157,7 +157,16 @@ impl Record {
         let fzy3jw = include_bytes!("../../static/fonts/FZY3JW.TTF");
         let source_han_sans_cn = FontArc::try_from_slice(source_han_sans_cn).unwrap();
         let fz_shh_jw = FontArc::try_from_slice(fz_shh_jw).unwrap();
-        let fzy3hjw = FontArc::try_from_slice(fzy3jw).unwrap();
+        let fzy3jw = FontArc::try_from_slice(fzy3jw).unwrap();
+
+        // 标题
+        ImageText::new("Orange", &fz_shh_jw, 85.0)
+            .set_axis(241, 60)
+            .set_color(Rgba([251, 176, 59, 255]))
+            .draw_with(&mut img_top, 5);
+        ImageText::new("对战日记", &fzy3jw, 72.0)
+            .set_axis(556, 70)
+            .draw_with(&mut img_top, 5);
 
         // 本方标签
         let data0tag = if let Some(data0) = data.first().cloned() {
@@ -233,7 +242,7 @@ impl Record {
             let historical_score = datum.historical_score.unwrap_or_default().to_string();
             let score_change = datum.score_change.unwrap_or_default();
             let score = score_change.score.unwrap_or_default().to_string();
-            ImageText::new("积分              当场", &fzy3hjw, font_size - 6.0)
+            ImageText::new("积分              当场", &fzy3jw, font_size - 6.0)
                 .set_axis(780, body_down_y + 7)
                 .set_color(text_color)
                 .draw(&mut img);
@@ -268,6 +277,11 @@ impl Record {
                 .set_axis(0, y as i32)
                 .draw(&mut base);
         }
+
+        ImageText::new("橘子科技提供技术支持", &fz_shh_jw, 30.0)
+            .set_axis(540, 30)
+            .set_aligns(vec![Align::Horizontally])
+            .draw_with(&mut img_bottom, 16);
 
         // 底部写入base
         ImagePicture::new(img_bottom, 0)
@@ -346,6 +360,30 @@ impl RectRound {
     }
 }
 
+/// # 顶部
+async fn top() -> Option<RgbaImage> {
+    let mut bg = RectRound::new(1080, 240)
+        .set_color(Color::from_rgba8(228, 215, 255, 255))
+        .create_pixmap();
+
+    RectRound::new(1080, 240)
+        .set_start_color(Color::from_rgba8(46, 49, 146, 255))
+        .set_end_color(Color::from_rgba8(102, 45, 145, 255))
+        .set_radius(RectRadius::new_bottom(30.0))
+        .draw(&mut bg, 0, 0);
+
+    // 标志
+    draw_logo(&mut bg, 54, 50);
+
+    // tag栏
+    RectRound::new(285, 60)
+        .set_radius(RectRadius::new(30.0))
+        .set_color(Color::from_rgba8(230, 230, 230, 255))
+        .draw(&mut bg, 240, 160);
+    RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
+}
+
+/// # 赢局
 async fn body_win() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(0, 104, 55, 255);
     let body = RectRound::body()
@@ -355,6 +393,7 @@ async fn body_win() -> Option<RgbaImage> {
     RgbaImage::from_raw(body.width(), body.height(), body.take())
 }
 
+/// # 输局
 async fn body_lose() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(158, 0, 93, 255);
     let body = RectRound::body()
@@ -364,6 +403,7 @@ async fn body_lose() -> Option<RgbaImage> {
     RgbaImage::from_raw(body.width(), body.height(), body.take())
 }
 
+/// # 失败
 async fn body_fail() -> Option<RgbaImage> {
     let main_color = Color::from_rgba8(51, 51, 51, 255);
     let body = RectRound::body()
@@ -371,6 +411,19 @@ async fn body_fail() -> Option<RgbaImage> {
         .set_end_color(main_color)
         .draw_ele(main_color);
     RgbaImage::from_raw(body.width(), body.height(), body.take())
+}
+
+/// # 底部
+async fn bottom() -> Option<RgbaImage> {
+    let mut bg = RectRound::new(1080, 70)
+        .set_color(Color::from_rgba8(228, 215, 255, 255))
+        .create_pixmap();
+    RectRound::new(1080, 60)
+        .set_start_color(Color::from_rgba8(46, 49, 146, 255))
+        .set_end_color(Color::from_rgba8(102, 45, 145, 255))
+        .set_radius(RectRadius::new_top(30.0))
+        .draw(&mut bg, 0, 10);
+    RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
 
 #[tokio::test]

@@ -1,6 +1,9 @@
+use crate::api::image_util::Draw;
 use image::RgbaImage;
-use imageproc::drawing::Canvas;
-use tiny_skia::{Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Point, SpreadMode, Transform};
+use tiny_skia::{
+    Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap,
+    Point, SpreadMode, Transform,
+};
 
 pub struct RectRound {
     width: u32,
@@ -9,6 +12,14 @@ pub struct RectRound {
     padding: f32,
     start_color: Color,
     end_color: Color,
+    direction: Direction,
+}
+
+pub enum Direction {
+    /// # 横向
+    Horizontally,
+    /// # 纵向
+    Vertically,
 }
 
 impl RectRound {
@@ -20,6 +31,7 @@ impl RectRound {
             padding: 0.0,
             start_color: Color::WHITE,
             end_color: Color::WHITE,
+            direction: Direction::Horizontally,
         }
     }
 
@@ -49,13 +61,24 @@ impl RectRound {
         self
     }
 
+    pub fn rgba_image(self) -> Option<RgbaImage> {
+        // 转化成RgbaImage
+        RgbaImage::from_raw(
+            self.width,
+            self.height,
+            self.create_pixmap().encode_png().unwrap(),
+        )
+    }
+}
+
+impl Draw for RectRound {
     // 图形元素
-    pub fn create_pixmap(self) -> Pixmap {
+    fn create_pixmap(self) -> Pixmap {
         // 创建一个 Pixmap 用来渲染
         let mut pixmap = Pixmap::new(self.width, self.height).unwrap();
 
         // 创建路径
-        let path = self.radius.create_rounded_rect_path(
+        let path = self.radius.builder(
             self.padding,
             self.padding,
             self.width as f32 - self.padding,
@@ -69,9 +92,19 @@ impl RectRound {
         if self.start_color == self.end_color {
             paint.set_color(self.start_color);
         } else {
+            let (start_point, end_point) = match self.direction {
+                Direction::Horizontally => (
+                    Point::from_xy(0.0, self.height as f32 / 2.0),
+                    Point::from_xy(self.width as f32, self.height as f32 / 2.0),
+                ),
+                Direction::Vertically => (
+                    Point::from_xy(self.width as f32 / 2.0, 0.0),
+                    Point::from_xy(self.width as f32 / 2.0, self.height as f32),
+                )
+            };
             paint.shader = LinearGradient::new(
-                Point::from_xy(self.width as f32 / 2.0, 0.0),
-                Point::from_xy(self.width as f32 / 2.0, self.height as f32),
+                start_point,
+                end_point,
                 vec![
                     GradientStop::new(0.0, self.start_color),
                     GradientStop::new(1.0, self.end_color),
@@ -79,7 +112,7 @@ impl RectRound {
                 SpreadMode::Pad,
                 Transform::identity(),
             )
-                .unwrap();
+            .unwrap();
         }
 
         // 绘制路径到 Pixmap 上
@@ -92,22 +125,6 @@ impl RectRound {
         );
 
         pixmap
-    }
-
-    pub fn draw(self, base_pixmap: &mut Pixmap, x: i32, y: i32) {
-        base_pixmap.draw_pixmap(
-            x,
-            y,
-            self.create_pixmap().as_ref(),
-            &PixmapPaint::default(),
-            Transform::identity(),
-            None,
-        );
-    }
-
-    pub fn rgba_image(self) -> Option<RgbaImage> {
-        // 转化成RgbaImage
-        RgbaImage::from_raw(self.width, self.height, self.create_pixmap().encode_png().unwrap())
     }
 }
 
@@ -155,7 +172,7 @@ impl RectRadius {
         }
     }
 
-    fn create_rounded_rect_path(self, x: f32, y: f32, width: f32, height: f32) -> Option<Path> {
+    fn builder(self, x: f32, y: f32, width: f32, height: f32) -> Option<Path> {
         let mut builder = PathBuilder::new();
         builder.move_to(x + self.left_top, y);
         builder.line_to(x + width - self.right_top, y);
