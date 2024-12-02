@@ -53,9 +53,9 @@ impl Menu {
         );
 
         let source_han_sans_cn = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
-        let fz_xq_jw = include_bytes!("../../static/fonts/FZXQJW.TTF");
+        let fz_zq_jw = include_bytes!("../../static/fonts/FZZQJW.TTF");
         let source_han_sans_cn = FontArc::try_from_slice(source_han_sans_cn).unwrap();
-        let fz_xq_jw = FontArc::try_from_slice(fz_xq_jw).unwrap();
+        let fz_zq_jw = FontArc::try_from_slice(fz_zq_jw).unwrap();
 
         // 标题
         ImageText::new("Orange Menu", &source_han_sans_cn, 88.0)
@@ -74,7 +74,7 @@ impl Menu {
                 .draw(&mut img);
 
             for (line, remark) in body.remark.iter().enumerate() {
-                ImageText::new(remark, &fz_xq_jw, 26.0)
+                ImageText::new(remark, &fz_zq_jw, 26.0)
                     .set_color(Rgba::black())
                     .set_axis(30, 55 + line as i32 * 36)
                     .draw(&mut img);
@@ -93,7 +93,7 @@ impl Menu {
             }
         }
 
-        ImageText::new("橘子科技提供技术支持", &fz_xq_jw, 30.0)
+        ImageText::new("橘子科技提供技术支持", &fz_zq_jw, 30.0)
             .set_axis(540, 37)
             .set_aligns(vec![Align::Horizontally, Align::Vertically])
             .draw_with(&mut img_bottom, 16);
