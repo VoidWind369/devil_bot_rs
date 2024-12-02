@@ -82,7 +82,7 @@ impl Menu {
 
             // 底部写入base
             ImagePicture::new(img, 0)
-                .set_axis(40 + x, 230 + y)
+                .set_axis(35 + x, 230 + y)
                 .draw(&mut base);
 
             if i % 2 == 0 {
