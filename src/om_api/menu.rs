@@ -2,7 +2,7 @@ use crate::api::image_util::{
     draw_logo, Align, Direction, Draw, ImagePicture, ImageText, RectRadius, RectRound,
 };
 use ab_glyph::FontArc;
-use image::{ColorType, DynamicImage, Rgba, RgbaImage};
+use image::{open, ColorType, DynamicImage, Rgba, RgbaImage};
 use imageproc::definitions::HasBlack;
 use serde::{Deserialize, Serialize};
 use tiny_skia::{Color, Pixmap};
@@ -51,6 +51,10 @@ impl Menu {
             top_height + body_height + bottom_height,
             ColorType::Rgba8,
         );
+        let menu_bg = open("./static/image/menu_bg.png").unwrap().to_rgba8();
+        ImagePicture::new(menu_bg, top_height + body_height + bottom_height)
+            .set_aligns(vec![Align::Horizontally])
+            .draw(&mut base);
 
         let source_han_sans_cn = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
         let fz_zq_jw = include_bytes!("../../static/fonts/FZZQJW.TTF");
@@ -69,14 +73,14 @@ impl Menu {
         let (mut x, mut y) = (0, 0);
         for (i, body) in self.body.iter().enumerate() {
             let mut img = img_body.clone();
-            ImageText::new(&body.name, &source_han_sans_cn, 32.0)
-                .set_axis(26, 10)
+            ImageText::new(&body.name, &source_han_sans_cn, 26.0)
+                .set_axis(40, 10)
                 .draw(&mut img);
 
             for (line, remark) in body.remark.iter().enumerate() {
-                ImageText::new(remark, &fz_zq_jw, 26.0)
+                ImageText::new(remark, &fz_zq_jw, 18.0)
                     .set_color(Rgba::black())
-                    .set_axis(30, 55 + line as i32 * 36)
+                    .set_axis(30, 55 + line as i32 * 24)
                     .draw(&mut img);
             }
 
@@ -114,13 +118,13 @@ async fn top() -> Option<RgbaImage> {
         .create_pixmap();
 
     RectRound::new(1080, 200)
-        .set_start_color(Color::from_rgba8(46, 49, 146, 255))
-        .set_end_color(Color::from_rgba8(102, 45, 145, 255))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 2))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 2))
         .set_radius(RectRadius::new_bottom(30.0))
         .draw(&mut bg, 0, 0);
 
     // 标志
-    draw_logo(&mut bg, 54, 50);
+    draw_logo(&mut bg, 54, 30);
     RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
 
@@ -128,8 +132,8 @@ async fn body_data() -> Option<RgbaImage> {
     let mut body = Pixmap::new(480, 130).unwrap();
 
     RectRound::new(480, 50)
-        .set_start_color(Color::from_rgba8(0, 146, 69, 255))
-        .set_end_color(Color::from_rgba8(0, 104, 55, 255))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 4))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 4))
         .set_radius(RectRadius::new_top(30.0))
         .set_direction(Direction::Vertically)
         .draw(&mut body, 0, 0);
@@ -147,8 +151,8 @@ async fn bottom() -> Option<RgbaImage> {
         .set_color(Color::from_rgba8(150, 215, 255, 0))
         .create_pixmap();
     RectRound::new(1080, 60)
-        .set_color(Color::from_rgba8(46, 49, 146, 255))
-        .set_radius(RectRadius::new_top(30.0))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 3))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 3))
         .draw(&mut bg, 0, 10);
     RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
