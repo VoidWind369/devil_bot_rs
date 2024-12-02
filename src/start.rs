@@ -29,16 +29,6 @@ pub async fn listen(ob_data: OneBotData) {
         let mut rng = rand::thread_rng();
         let z = rng.gen_range(0.00..1000.00);
         if msg.eq("指令") && z > 800.00 {
-            let img = Menu::from_file("menu.json").await.list_img().await;
-            send_msg(
-                SendMessageType::Group,
-                ob_data.user_id,
-                Some(group),
-                &format!("data:image/png;base64,{}", base64img(img).await),
-                None,
-            )
-            .await;
-
             let api = zn_api().await;
             send_msg(
                 SendMessageType::Group,
@@ -66,6 +56,19 @@ pub async fn listen(ob_data: OneBotData) {
 
             log_info!("{y}")
         }
+
+        if msg.eq("指令") {
+            let img = Menu::from_file("menu.json").await.list_img().await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &format!("data:image/png;base64,{}", base64img(img).await),
+                None,
+            )
+                .await;
+        }
+
         if at.starts_with(ob_data.self_id.unwrap().to_string().as_str()) {
             let api = zn_api().await;
             send_msg(
