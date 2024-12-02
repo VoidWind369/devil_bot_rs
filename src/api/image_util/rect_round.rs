@@ -61,6 +61,11 @@ impl RectRound {
         self
     }
 
+    pub fn set_direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
+
     pub fn rgba_image(self) -> Option<RgbaImage> {
         // 转化成RgbaImage
         RgbaImage::from_raw(

@@ -143,14 +143,14 @@ impl Record {
         let img_lose = body_lose().await.unwrap();
         let img_fail = body_fail().await.unwrap();
 
-        let wight = img_win.width();
+        let width = img_win.width();
         let top_height = img_top.height();
         let list_height = img_win.height();
         let body_height = data.len() as u32 * list_height;
         let bottom_height = img_bottom.height();
         let height = top_height + data.len() as u32 * list_height + bottom_height;
 
-        let mut base = DynamicImage::new(wight, height, ColorType::Rgba8);
+        let mut base = DynamicImage::new(width, height, ColorType::Rgba8);
 
         let source_han_sans_cn = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
         let fz_shh_jw = include_bytes!("../../static/fonts/FZSHHJW.TTF");
