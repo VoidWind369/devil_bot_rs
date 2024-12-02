@@ -4,7 +4,6 @@ use crate::api::image_util::{
 use ab_glyph::FontArc;
 use image::{ColorType, DynamicImage, Rgba, RgbaImage};
 use imageproc::definitions::HasBlack;
-use imageproc::drawing::Canvas;
 use serde::{Deserialize, Serialize};
 use tiny_skia::{Color, Pixmap};
 use tokio::io::AsyncReadExt;
