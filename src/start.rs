@@ -1,4 +1,5 @@
 use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
+use crate::om_api::menu::Menu;
 use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
 use rand::Rng;
@@ -28,6 +29,16 @@ pub async fn listen(ob_data: OneBotData) {
         let mut rng = rand::thread_rng();
         let z = rng.gen_range(0.00..1000.00);
         if msg.eq("指令") && z > 800.00 {
+            let img = Menu::from_file("menu.json").await.list_img().await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &format!("data:image/png;base64,{}", base64img(img).await),
+                None,
+            )
+            .await;
+
             let api = zn_api().await;
             send_msg(
                 SendMessageType::Group,
@@ -63,7 +74,8 @@ pub async fn listen(ob_data: OneBotData) {
                 Some(group),
                 &api,
                 Some(&ob_data.user_id.unwrap().to_string()),
-            ).await;
+            )
+            .await;
         }
         if msg.starts_with("查询日记#") {
             let mut split_str = msg.split('#').skip(1);

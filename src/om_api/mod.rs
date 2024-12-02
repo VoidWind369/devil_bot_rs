@@ -1,2 +1,2 @@
 pub mod record;
-mod menu;
+pub mod menu;

@@ -21,7 +21,7 @@ pub struct MenuBody {
 }
 
 impl Menu {
-    async fn from_file(filename: &str) -> Self {
+    pub(crate) async fn from_file(filename: &str) -> Self {
         let mut yaml_file = tokio::fs::File::open(filename)
             .await
             .expect("read config error");
