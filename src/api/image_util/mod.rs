@@ -3,11 +3,11 @@ mod image_draw;
 mod rect_round;
 mod circle;
 
-pub use image_draw::*;
-pub use rect_round::*;
 pub use circle::*;
 pub use flower_draw::*;
-use tiny_skia::{Color, Pixmap, PixmapPaint, Transform};
+pub use image_draw::*;
+pub use rect_round::*;
+use tiny_skia::{Pixmap, PixmapPaint, Transform};
 
 pub trait Draw {
     // 图形元素

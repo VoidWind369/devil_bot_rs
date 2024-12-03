@@ -18,6 +18,15 @@ pub struct Menu {
 pub struct MenuBody {
     name: String,
     remark: Vec<String>,
+    msg_type: MenuBodyMsgType,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+enum MenuBodyMsgType {
+    Private,
+    #[default]
+    Guild,
 }
 
 impl Menu {
@@ -75,24 +84,30 @@ impl Menu {
         let (mut x, mut y) = (0, 0);
         for (i, body) in self.body.iter().enumerate() {
             let mut img = img_body.clone();
-            ImageText::new(&body.name, &source_han_sans_cn, 26.0)
+            let color = match body.msg_type {
+                MenuBodyMsgType::Private => Rgba([225, 255, 215, 255]),
+                MenuBodyMsgType::Guild => Rgba([255, 250, 180, 255]),
+            };
+
+            ImageText::new(&body.name, &source_han_sans_cn, 28.0)
                 .set_axis(40, 10)
+                .set_color(color)
                 .draw(&mut img);
 
             for (line, remark) in body.remark.iter().enumerate() {
                 ImageText::new(remark, &fz_zq_jw, 18.0)
                     .set_color(Rgba::black())
-                    .set_axis(30, 55 + line as i32 * 24)
+                    .set_axis(40, 55 + line as i32 * 24)
                     .draw(&mut img);
             }
 
             // 底部写入base
             ImagePicture::new(img, 0)
-                .set_axis(35 + x, 230 + y)
+                .set_axis(39 + x, 230 + y)
                 .draw(&mut base);
 
             if i % 2 == 0 {
-                x = 530;
+                x = 522;
             } else {
                 x = 0;
                 y += 160
@@ -120,8 +135,8 @@ async fn top() -> Option<RgbaImage> {
         .create_pixmap();
 
     RectRound::new(1080, 200)
-        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 2))
-        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 2))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 10 * 7))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 10 * 7))
         .set_radius(RectRadius::new_bottom(30.0))
         .draw(&mut bg, 0, 0);
 
@@ -134,14 +149,14 @@ async fn body_data() -> Option<RgbaImage> {
     let mut body = Pixmap::new(480, 130).unwrap();
 
     RectRound::new(480, 50)
-        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 4))
-        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 4))
-        .set_radius(RectRadius::new_top(30.0))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 10 * 9))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 10 * 9))
+        .set_radius(RectRadius::new_top(42.0))
         .set_direction(Direction::Vertically)
         .draw(&mut body, 0, 0);
 
     RectRound::new(480, 80)
-        .set_radius(RectRadius::new_bottom(30.0))
+        .set_radius(RectRadius::new_bottom(42.0))
         .draw(&mut body, 0, 50);
 
     RgbaImage::from_raw(body.width(), body.height(), body.take())
@@ -153,8 +168,8 @@ async fn bottom() -> Option<RgbaImage> {
         .set_color(Color::from_rgba8(150, 215, 255, 0))
         .create_pixmap();
     RectRound::new(1080, 60)
-        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 5 * 3))
-        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 5 * 3))
+        .set_start_color(Color::from_rgba8(195, 13, 35, 255 / 10 * 9))
+        .set_end_color(Color::from_rgba8(234, 85, 20, 255 / 10 * 9))
         .draw(&mut bg, 0, 10);
     RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
