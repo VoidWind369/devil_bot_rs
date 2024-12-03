@@ -64,7 +64,7 @@ impl Menu {
         let fz_zq_jw = FontArc::try_from_slice(fz_zq_jw).unwrap();
 
         // 标题
-        ImageText::new("Orange Red Jam", &fz_shh_jw, 88.0)
+        ImageText::new(&self.title, &fz_shh_jw, 88.0)
             .set_axis(241, 55)
             .set_color(Rgba::white())
             .draw_with(&mut img_top, 5);
