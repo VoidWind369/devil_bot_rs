@@ -1,7 +1,7 @@
 use crate::api::image_util::{Circle, Draw};
 use tiny_skia::{
-    Color, FillRule, GradientStop, Paint, Path, PathBuilder, Pixmap, PixmapPaint,
-    Point, RadialGradient, SpreadMode, Transform,
+    Color, FillRule, GradientStop, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Point,
+    RadialGradient, SpreadMode, Transform,
 };
 
 #[derive(Clone)]
@@ -121,7 +121,12 @@ impl Draw for Flower {
 }
 
 /// # 画朵花
-fn flower_logo() -> Pixmap {
+fn flower_logo(color_type: &str) -> Pixmap {
+    let [(r, g, b), (r1, g1, b1), (r2, g2, b2), (r3, g3, b3)] = match color_type {
+        "record" => [(46, 49, 146), (0, 255, 255), (0, 104, 55), (40, 170, 226)],
+        "menu" => [(195, 13, 35), (255, 255, 0), (104, 55, 0), (226, 170, 40)],
+        _ => [(46, 49, 146), (0, 255, 255), (0, 104, 55), (40, 170, 226)],
+    };
     let (circle_r, bg_size, co_size, co1_size) = (70.0, 130.0, 116.0, 95.0);
     let bg_xy = (circle_r - bg_size / 2.0) as i32;
     let co_xy = (circle_r - co_size / 2.0) as i32;
@@ -133,38 +138,38 @@ fn flower_logo() -> Pixmap {
         .create_pixmap();
 
     Circle::new(circle_r - 20.0)
-        .set_start_color(Color::from_rgba8(46, 49, 146, 200))
-        .set_end_color(Color::from_rgba8(46, 49, 146, 150))
+        .set_start_color(Color::from_rgba8(r, g, b, 200))
+        .set_end_color(Color::from_rgba8(r, g, b, 150))
         .draw(&mut bg, 20, 20);
 
     Flower::new()
         .set_size(bg_size)
         .set_start_color(Color::from_rgba8(255, 255, 145, 180))
-        .set_end_color(Color::from_rgba8(46, 49, 146, 230))
+        .set_end_color(Color::from_rgba8(r, g, b, 230))
         .draw(&mut bg, bg_xy, bg_xy);
 
     Flower::new()
         .set_size(co_size)
         .set_display(6.0)
-        .set_start_color(Color::from_rgba8(40, 170, 226, 130))
-        .set_end_color(Color::from_rgba8(0, 255, 255, 170))
+        .set_start_color(Color::from_rgba8(r3, g3, b3, 130))
+        .set_end_color(Color::from_rgba8(r1, g1, b1, 170))
         .draw(&mut bg, co_xy, co_xy);
 
     Flower::new()
         .set_size(co1_size)
         .set_display(10.0)
-        .set_start_color(Color::from_rgba8(0, 104, 55, 100))
-        .set_end_color(Color::from_rgba8(0, 255, 255, 255))
+        .set_start_color(Color::from_rgba8(r2, g2, b2, 100))
+        .set_end_color(Color::from_rgba8(r1, g1, b1, 255))
         .draw(&mut bg, co_xy1, co_xy1);
     bg
 }
 
 /// # 标志
-pub fn draw_logo(base_pixmap: &mut Pixmap, x: i32, y: i32) {
+pub fn draw_logo(base_pixmap: &mut Pixmap, x: i32, y: i32, color_type: &str) {
     base_pixmap.draw_pixmap(
         x,
         y,
-        flower_logo().as_ref(),
+        flower_logo(color_type).as_ref(),
         &PixmapPaint::default(),
         Transform::identity(),
         None,
@@ -173,5 +178,5 @@ pub fn draw_logo(base_pixmap: &mut Pixmap, x: i32, y: i32) {
 
 #[tokio::test]
 async fn flower_test() {
-    flower_logo().save_png("flower_test.png").unwrap();
+    flower_logo("record").save_png("flower_test.png").unwrap();
 }

@@ -7,11 +7,12 @@ pub use image_draw::*;
 pub use rect_round::*;
 pub use circle::*;
 pub use flower_draw::*;
-use tiny_skia::{Pixmap, PixmapPaint, Transform};
+use tiny_skia::{Color, Pixmap, PixmapPaint, Transform};
 
 pub trait Draw {
     // 图形元素
     fn create_pixmap(self) -> Pixmap;
+
     fn draw(self, base_pixmap: &mut Pixmap, x: i32, y: i32) where Self: Sized {
         base_pixmap.draw_pixmap(
             x,

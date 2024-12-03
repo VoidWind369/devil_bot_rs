@@ -3,7 +3,7 @@ use crate::api::image_util::{
 };
 use ab_glyph::FontArc;
 use image::{open, ColorType, DynamicImage, Rgba, RgbaImage};
-use imageproc::definitions::HasBlack;
+use imageproc::definitions::{HasBlack, HasWhite};
 use serde::{Deserialize, Serialize};
 use tiny_skia::{Color, Pixmap};
 use tokio::io::AsyncReadExt;
@@ -57,14 +57,16 @@ impl Menu {
             .draw(&mut base);
 
         let source_han_sans_cn = include_bytes!("../../static/fonts/SourceHanSansCN-Bold.otf");
+        let fz_shh_jw = include_bytes!("../../static/fonts/FZSHHJW.TTF");
         let fz_zq_jw = include_bytes!("../../static/fonts/FZZQJW.TTF");
         let source_han_sans_cn = FontArc::try_from_slice(source_han_sans_cn).unwrap();
+        let fz_shh_jw = FontArc::try_from_slice(fz_shh_jw).unwrap();
         let fz_zq_jw = FontArc::try_from_slice(fz_zq_jw).unwrap();
 
         // 标题
-        ImageText::new("Orange Menu", &source_han_sans_cn, 88.0)
+        ImageText::new("Orange Menu", &fz_shh_jw, 88.0)
             .set_axis(241, 55)
-            .set_color(Rgba([251, 176, 59, 255]))
+            .set_color(Rgba::white())
             .draw_with(&mut img_top, 5);
 
         // 顶部写入base
@@ -97,10 +99,10 @@ impl Menu {
             }
         }
 
-        ImageText::new("橘子科技提供技术支持", &fz_zq_jw, 30.0)
+        ImageText::new("橘子科技提供技术支持", &fz_shh_jw, 30.0)
             .set_axis(540, 37)
             .set_aligns(vec![Align::Horizontally, Align::Vertically])
-            .draw_with(&mut img_bottom, 16);
+            .draw_with(&mut img_bottom, 12);
 
         // 底部写入base
         ImagePicture::new(img_bottom, 0)
@@ -124,7 +126,7 @@ async fn top() -> Option<RgbaImage> {
         .draw(&mut bg, 0, 0);
 
     // 标志
-    draw_logo(&mut bg, 54, 30);
+    draw_logo(&mut bg, 54, 30, "menu");
     RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
 

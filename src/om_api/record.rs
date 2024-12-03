@@ -373,7 +373,7 @@ async fn top() -> Option<RgbaImage> {
         .draw(&mut bg, 0, 0);
 
     // 标志
-    draw_logo(&mut bg, 54, 50);
+    draw_logo(&mut bg, 54, 50, "record");
 
     // tag栏
     RectRound::new(285, 60)
