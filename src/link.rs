@@ -37,11 +37,7 @@ async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>
     let config = Config::get().await;
     let token = config.bot.unwrap().token;
     log_info!("{}", "心跳线程loop");
-    let op3 = json!({
-        "op": 3, "body": { "token": token }
-    });
-    socket.send(Message::text(op3.to_string())).await.unwrap();
-    let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(10000));
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(30000));
     loop {
         interval.tick().await;
         // 创建一个ping消息
