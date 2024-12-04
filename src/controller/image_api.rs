@@ -5,8 +5,9 @@ use axum::http::header::CONTENT_TYPE;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
+use axum::{Json, Router};
 use image::ImageFormat;
+use crate::api::one_bot;
 
 async fn get_record(Path(tag): Path<String>) -> impl IntoResponse {
     let data = Record::new_json(&tag, '0').await.list_img(50).await;
@@ -24,8 +25,14 @@ async fn get_record(Path(tag): Path<String>) -> impl IntoResponse {
     (headers, buffer.into_inner()).into_response()
 }
 
+async fn ocr_image() -> impl IntoResponse {
+    let value = one_bot::ocr_image("http://image.omcoc.club/static/images/menu_1.png").await;
+    Json(value)
+}
+
 pub fn router(app: Router) -> Router {
     let img = Router::new()
-        .route("/get_record/{tag}", get(get_record));
+        .route("/get_record/{tag}", get(get_record))
+        .route("/ocr_image", get(ocr_image));
     app.nest("/img", img)
 }

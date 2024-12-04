@@ -301,3 +301,16 @@ fn send_at(id: &str) -> SendOneBotGroupMessage {
         },
     }
 }
+
+pub async fn ocr_image(path: &str) -> Value {
+    let config = Config::get().await.bot.unwrap();
+    let url = format!("{}/ocr_image", config.url.unwrap());
+    let json = json!({
+        "image": path
+    });
+    let response = Client::new().post(url).json(&json).send().await;
+    match response {
+        Ok(re) => re.json().await.unwrap_or_default(),
+        Err(_) => Value::default(),
+    }
+}
