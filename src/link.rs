@@ -28,7 +28,7 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
             start::listen(value_data.clone()).await;
         }
         if let Err(e) = serde_json::from_str::<OneBotData>(&data) {
-            panic!("{}", e);
+            log_warn!("{}", e);
         };
     }
 }
