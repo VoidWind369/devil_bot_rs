@@ -16,8 +16,8 @@ pub async fn conn() {
     let (mut socket, mut message) = client.split();
 
     let handle = handle(&mut message);
-    let _intent = intent(&mut socket);
-    tokio::join!(handle);
+    let intent = intent(&mut socket);
+    tokio::join!(handle, intent);
 }
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
@@ -34,8 +34,6 @@ async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStre
 }
 
 async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) {
-    let config = Config::get().await;
-    let token = config.bot.unwrap().token;
     log_info!("{}", "心跳线程loop");
     let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(30000));
     loop {
