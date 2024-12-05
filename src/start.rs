@@ -26,37 +26,6 @@ pub async fn listen(ob_data: OneBotData) {
     if let Some(group) = ob_data.group_id {
         log_info!("消息 {}", &msg);
 
-        let mut rng = rand::thread_rng();
-        let z = rng.gen_range(0.00..1000.00);
-        if msg.eq("指令") && z > 800.00 {
-            let api = zn_api().await;
-            send_msg(
-                SendMessageType::Group,
-                ob_data.user_id,
-                Some(group),
-                &api,
-                Some(&ob_data.user_id.unwrap().to_string()),
-            )
-            .await;
-        } else {
-            let mut rng = rand::thread_rng();
-            let y = rng.gen_range(0.00..1000.00);
-
-            if y > 999.90 {
-                let api = zn_api().await;
-                send_msg(
-                    SendMessageType::Group,
-                    ob_data.user_id,
-                    Some(group),
-                    &api,
-                    None,
-                )
-                .await;
-            }
-
-            log_info!("{y}")
-        }
-
         if msg.eq("指令") {
             let img = Menu::from_file("menu.json").await.list_img().await;
             send_msg(
@@ -97,6 +66,38 @@ pub async fn listen(ob_data: OneBotData) {
                 None,
             )
             .await;
+        }
+
+        // 彩蛋
+        let mut rng = rand::thread_rng();
+        let z = rng.gen_range(0.00..1000.00);
+        if msg.eq("指令") && z > 800.00 {
+            let api = zn_api().await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &api,
+                Some(&ob_data.user_id.unwrap().to_string()),
+            )
+                .await;
+        } else {
+            let mut rng = rand::thread_rng();
+            let y = rng.gen_range(0.00..1000.00);
+
+            if y > 999.90 {
+                let api = zn_api().await;
+                send_msg(
+                    SendMessageType::Group,
+                    ob_data.user_id,
+                    Some(group),
+                    &api,
+                    None,
+                )
+                    .await;
+            }
+
+            log_info!("{y}")
         }
     }
 }

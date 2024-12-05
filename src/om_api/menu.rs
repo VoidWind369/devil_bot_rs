@@ -89,13 +89,13 @@ impl Menu {
                 MenuBodyMsgType::Guild => Rgba([255, 250, 180, 255]),
             };
 
-            ImageText::new(&body.name, &source_han_sans_cn, 28.0)
+            ImageText::new(&body.name, &source_han_sans_cn, 30.0)
                 .set_axis(40, 10)
                 .set_color(color)
                 .draw(&mut img);
 
             for (line, remark) in body.remark.iter().enumerate() {
-                ImageText::new(remark, &fz_zq_jw, 18.0)
+                ImageText::new(remark, &fz_zq_jw, 20.0)
                     .set_color(Rgba::black())
                     .set_axis(40, 55 + line as i32 * 24)
                     .draw(&mut img);

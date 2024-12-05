@@ -8,6 +8,13 @@ mod om_api;
 mod start;
 mod util;
 
+async fn bot_run() {
+    loop {
+        link::conn().await;
+        log_info!("Restarting connection");
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let mut banner = String::from("--------------");
@@ -26,11 +33,7 @@ async fn main() {
     let server = controller::run();
 
     // 启动机器人
-    let bot = async {
-        loop {
-            link::conn().await;
-        }
-    };
+    let bot = bot_run();
 
     tokio::join!(server, bot);
 }
