@@ -76,7 +76,7 @@ impl Menu {
         ImageText::new(&self.title, &fz_shh_jw, 88.0)
             .set_axis(241, 55)
             .set_color(Rgba::white())
-            .draw_with(&mut img_top, 5);
+            .draw_with(&mut img_top, 15);
 
         // 顶部写入base
         ImagePicture::new(img_top, 0).draw(&mut base);
