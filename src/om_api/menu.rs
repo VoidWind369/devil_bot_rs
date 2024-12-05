@@ -74,8 +74,9 @@ impl Menu {
 
         // 标题
         ImageText::new(&self.title, &fz_shh_jw, 88.0)
-            .set_axis(241, 55)
+            .set_axis(540, 55)
             .set_color(Rgba::white())
+            .set_aligns(vec![Align::Horizontally])
             .draw_with(&mut img_top, 15);
 
         // 顶部写入base
@@ -141,7 +142,7 @@ async fn top() -> Option<RgbaImage> {
         .draw(&mut bg, 0, 0);
 
     // 标志
-    draw_logo(&mut bg, 54, 30, "menu");
+    // draw_logo(&mut bg, 54, 30, "menu");
     RgbaImage::from_raw(bg.width(), bg.height(), bg.take())
 }
 
