@@ -1,5 +1,5 @@
 use crate::api::image_util::{
-    draw_logo, Align, Direction, Draw, ImagePicture, ImageText, RectRadius, RectRound,
+    Align, Direction, Draw, ImagePicture, ImageText, RectRadius, RectRound,
 };
 use ab_glyph::FontArc;
 use image::{open, ColorType, DynamicImage, Rgba, RgbaImage};
