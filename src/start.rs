@@ -27,7 +27,9 @@ pub async fn listen(ob_data: OneBotData) {
         log_info!("消息 {}", &msg);
 
         if msg.eq("指令") {
+            log_info!("Read menu");
             let img = Menu::from_file("menu.json").await.list_img().await;
+            log_info!("Send menu");
             send_msg(
                 SendMessageType::Group,
                 ob_data.user_id,
@@ -36,6 +38,7 @@ pub async fn listen(ob_data: OneBotData) {
                 None,
             )
                 .await;
+            log_info!("Send end")
         }
 
         if at.starts_with(ob_data.self_id.unwrap().to_string().as_str()) {

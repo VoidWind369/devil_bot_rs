@@ -7,6 +7,7 @@ use imageproc::definitions::{HasBlack, HasWhite};
 use serde::{Deserialize, Serialize};
 use tiny_skia::{Color, Pixmap};
 use tokio::io::AsyncReadExt;
+use void_log::log_info;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Menu {
@@ -43,6 +44,7 @@ impl Menu {
     }
 
     pub async fn list_img(self) -> DynamicImage {
+        log_info!("Menu start");
         let mut img_top = top().await.unwrap();
         let img_body = body_data().await.unwrap();
         let mut img_bottom = bottom().await.unwrap();
@@ -124,7 +126,7 @@ impl Menu {
         ImagePicture::new(img_bottom, 0)
             .set_axis(0, (top_height + body_height) as i32)
             .draw(&mut base);
-
+        log_info!("Menu end");
         base
     }
 }
