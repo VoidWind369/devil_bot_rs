@@ -3,6 +3,6 @@ bot:
   url: http://1.orgvoid.top:5500/v1
   token: 988772dbe2bb54e46905a0d6dc07e3fe51c5f1c2cb6f45bb66294cfa71933488
 api:
-  url: http://get.cocsnipe.top/coc
+  url: http://get.cocsnipe.top
 chat_use:
   group: 622678662

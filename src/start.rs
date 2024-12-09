@@ -11,7 +11,11 @@ pub async fn listen(cc_body: CcDataBody) {
     let url = config.api.unwrap_or_default().url.unwrap_or_default();
     // let use_group = config.chat_use.unwrap_or_default().group.unwrap_or_default();
     let sender = cc_body.user.unwrap().id.unwrap_or_default();
-    let msg = cc_body.message.unwrap_or_default().content.unwrap_or_default();
+    let msg = cc_body
+        .message
+        .unwrap_or_default()
+        .content
+        .unwrap_or_default();
 
     // *******************群聊消息*******************
     if let Some(group) = cc_body.channel.unwrap().id {
@@ -23,7 +27,7 @@ pub async fn listen(cc_body: CcDataBody) {
             let text = format!("<img src='{}/listTimeImg'/>", &url);
             send_group_msg(&group, &text, -1).await;
         }
-        if msg.contains("更新#") {
+        if msg.starts_with("更新#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let time = vec[2].replace("：", ":");
             let union_id = match vec[1] {
@@ -35,7 +39,7 @@ pub async fn listen(cc_body: CcDataBody) {
                 "fwa" => 81,
                 "s盟" => 100,
                 "都城" => 201,
-                _ => 0
+                _ => 0,
             };
             let json = json!({
                 "id": union_id,
@@ -54,14 +58,22 @@ pub async fn listen(cc_body: CcDataBody) {
         //     let text = format!("<img src='{}'/>", img_url);
         //     send_group_msg(&group, &text, -1).await;
         // }
-        if msg.contains("查部落#") || msg.contains("部落配置#") {
+        if msg.starts_with("查部落#") || msg.contains("部落配置#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let text = format!("<img src='{}/coc/clan_img/{}'/>", &url, vec[1]);
             send_group_msg(&group, &text, -1).await;
         }
-        if msg.contains("查玩家#") {
+        if msg.starts_with("查玩家#") {
             let vec = msg.split("#").collect::<Vec<&str>>();
             let text = format!("<img src='{}/coc/player_img/{}'/>", &url, vec[1]);
+            send_group_msg(&group, &text, -1).await;
+        }
+        if msg.starts_with("搜部落#") {
+            let mut split = msg.split('#');
+            let name = split.nth(1).unwrap();
+            log_info!("Search {}", name);
+            let limit = split.nth(2).unwrap_or("10").parse::<usize>().unwrap();
+            let text = search_clans(name, limit).await;
             send_group_msg(&group, &text, -1).await;
         }
     }
@@ -69,16 +81,21 @@ pub async fn listen(cc_body: CcDataBody) {
     log_info!("消息 {}", &msg);
 }
 
+async fn search_clans(name: &str, limit: usize) -> String {
+    let config = Config::get().await.api.unwrap_or_default();
+    let api_url = config.url.unwrap_or_default();
+    let url = format!("{api_url}/coc/clans_info/{name}/{limit}");
+    let response = Client::new().get(url).send().await.unwrap();
+    response.text().await.unwrap()
+}
+
 fn to_native_dt(time_str: &str) -> NaiveDateTime {
     let full_str = format!("{}-{time_str}", Local::now().year());
     let fmt = "%Y-%m月%d号 %H:%M";
-    match NaiveDateTime::parse_from_str(&full_str, fmt) {
-        Ok(ndt) => { ndt }
-        Err(e) => {
-            log_warn!("Format Time Error {e}");
-            Default::default()
-        }
-    }
+    NaiveDateTime::parse_from_str(&full_str, fmt).unwrap_or_else(|e| {
+        log_warn!("Format Time Error {e}");
+        Default::default()
+    })
 }
 
 async fn get_comfy(text: String) -> String {
@@ -87,7 +104,7 @@ async fn get_comfy(text: String) -> String {
         "prompt": text
     });
     let response = Client::new().post(url).json(&json).send().await.unwrap();
-    log_info!("{:?}{:?}",response.status(), response.headers());
+    log_info!("{:?}{:?}", response.status(), response.headers());
     let res = response.json::<String>().await.unwrap();
     res
 }
@@ -99,7 +116,10 @@ async fn set_time(url: &str, json: Value) -> String {
         .send()
         .await
         .unwrap();
-    format!("{}", response.text().await.unwrap_or("没有更新".to_string()))
+    format!(
+        "{}",
+        response.text().await.unwrap_or("没有更新".to_string())
+    )
 }
 
 async fn set_xin() {
@@ -110,7 +130,10 @@ async fn set_xin() {
         .send()
         .await
         .unwrap();
-    log_info!("鑫盟{}", response.text().await.unwrap_or("没有更新".to_string()))
+    log_info!(
+        "鑫盟{}",
+        response.text().await.unwrap_or("没有更新".to_string())
+    )
 }
 
 fn _formal_fwa(string: String) -> String {
