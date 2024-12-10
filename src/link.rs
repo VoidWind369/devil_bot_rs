@@ -22,20 +22,16 @@ pub async fn conn() {
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
     log_info!("{}", "收发线程loop");
-    loop {
-        if let Some(Ok(Message::Text(data))) = message.next().await {
-            log_msg!("WebSocket分片连接: {}", &data);
-            let cc_data = serde_json::from_str::<CcData>(&data).unwrap_or(Default::default());
+    while let Some(Ok(Message::Text(data))) = message.next().await {
+        log_msg!("WebSocket分片连接: {}", &data);
+        let cc_data = serde_json::from_str::<CcData>(&data).unwrap_or(Default::default());
 
-            if Some(0) == cc_data.op {
-                let body = cc_data.body.unwrap();
-                start::listen(body.clone()).await;
-            }
-        } else {
-            log_error!("收发线程中断");
-            break;
+        if Some(0) == cc_data.op {
+            let body = cc_data.body.unwrap();
+            start::listen(body.clone()).await;
         }
     }
+    log_error!("收发线程中断");
 }
 
 async fn intent(socket: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) {
