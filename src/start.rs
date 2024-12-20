@@ -1,4 +1,5 @@
 use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
+use crate::modal::openid::Openid;
 use crate::om_api::menu::Menu;
 use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
@@ -37,7 +38,7 @@ pub async fn listen(ob_data: OneBotData) {
                 &format!("data:image/png;base64,{}", base64img(img).await),
                 None,
             )
-                .await;
+            .await;
             log_info!("Send end")
         }
 
@@ -70,6 +71,18 @@ pub async fn listen(ob_data: OneBotData) {
             )
             .await;
         }
+        if msg.starts_with("查身份号#") {
+            let qq = msg.split('#').nth(1).unwrap_or_default();
+            let text = Openid::select_qq(qq).await.unwrap().to_string();
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &text,
+                None,
+            )
+            .await;
+        }
 
         // 彩蛋
         let mut rng = rand::thread_rng();
@@ -83,7 +96,7 @@ pub async fn listen(ob_data: OneBotData) {
                 &api,
                 Some(&ob_data.user_id.unwrap().to_string()),
             )
-                .await;
+            .await;
         } else {
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(0.00..1000.00);
@@ -97,7 +110,7 @@ pub async fn listen(ob_data: OneBotData) {
                     &api,
                     None,
                 )
-                    .await;
+                .await;
             }
 
             log_info!("{y}")

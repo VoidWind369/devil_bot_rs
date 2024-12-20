@@ -4,6 +4,7 @@ use sqlx::{MySql, Pool};
 use std::str::FromStr;
 
 pub mod app_qq;
+pub mod openid;
 
 impl ConfigDatabase {
     pub async fn mysql_om(self) -> Pool<MySql> {
