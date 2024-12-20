@@ -27,9 +27,9 @@ impl Display for Openid {
         write!(
             f,
             "身份号：{}\n名称：{}\nQQ号：{}",
-            &self.id.as_ref().unwrap(),
-            &self.name.as_ref().unwrap(),
-            &self.qq.as_ref().unwrap()
+            &self.id.unwrap_or_default(),
+            &self.name.as_ref().unwrap_or(&"[空]".to_string()),
+            &self.clone().qq.unwrap_or_default()
         )
     }
 }
