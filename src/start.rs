@@ -73,7 +73,7 @@ pub async fn listen(ob_data: OneBotData) {
         }
         if msg.starts_with("查身份号#") {
             let qq = msg.split('#').nth(1).unwrap_or_default();
-            let text = Openid::select_qq(qq).await.unwrap().to_string();
+            let text = Openid::select_qq(qq).await.unwrap_or_default().to_string();
             send_msg(
                 SendMessageType::Group,
                 ob_data.user_id,

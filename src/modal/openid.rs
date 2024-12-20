@@ -22,6 +22,17 @@ impl Openid {
     }
 }
 
+impl Default for Openid {
+    fn default() -> Self {
+        Self {
+            id: Some(-1),
+            openid: None,
+            name: Some(String::from("[无]")),
+            qq: Some(String::from("[无记录]")),
+        }
+    }
+}
+
 impl Display for Openid {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
