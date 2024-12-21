@@ -1,4 +1,6 @@
 use crate::api::one_bot::{send_msg, OneBotData, SendMessageType};
+use crate::modal::app_admin_power::AppAdminPower;
+use crate::modal::app_qq::AppQQ;
 use crate::modal::openid::Openid;
 use crate::om_api::menu::Menu;
 use crate::om_api::record::{base64img, Record};
@@ -22,6 +24,8 @@ pub async fn listen(ob_data: OneBotData) {
             continue;
         }
     }
+
+    let user_i64 = ob_data.user_id.unwrap_or_default();
 
     // *******************群聊消息*******************
     if let Some(group) = ob_data.group_id {
@@ -83,6 +87,51 @@ pub async fn listen(ob_data: OneBotData) {
             )
             .await;
         }
+        if msg.starts_with("修改名称#") {
+            let mut split = msg.split('#').skip(1);
+            let qq = split.next().unwrap_or_default();
+            let name = split.next().unwrap_or_default();
+            // 查权限
+            if let Ok(app_qq) = AppQQ::select(&user_i64.to_string()).await {
+                let openid_id = app_qq.id.unwrap_or_default();
+                if let Err(_) = AppAdminPower::select_admin_id(openid_id, 1).await {
+                    send_msg(
+                        SendMessageType::Group,
+                        ob_data.user_id,
+                        Some(group),
+                        "没有权限",
+                        None,
+                    )
+                    .await;
+                    return;
+                };
+            } else {
+                send_msg(
+                    SendMessageType::Group,
+                    ob_data.user_id,
+                    Some(group),
+                    "你还没有绑定小程序",
+                    None,
+                )
+                .await;
+                return;
+            };
+            // 执行
+            let result = Openid::update_name(qq, name).await.unwrap();
+            let text = if result.rows_affected() > 0 {
+                Openid::select_qq(qq).await.unwrap_or_default().to_string()
+            } else {
+                "修改失败".to_string()
+            };
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &text,
+                None,
+            )
+            .await;
+        }
 
         // 彩蛋
         let mut rng = rand::thread_rng();
@@ -129,15 +178,4 @@ async fn zn_api() -> String {
     let value = client.json::<Value>().await.unwrap();
     log_info!("{:?}", value);
     value["result"]["content"].as_str().unwrap().to_string()
-}
-
-async fn get_comfy(text: String) -> String {
-    let url = "http://127.0.0.1:50000/get_comfy";
-    let json = json!({
-        "prompt": text
-    });
-    let response = Client::new().post(url).json(&json).send().await.unwrap();
-    log_info!("{:?}{:?}", response.status(), response.headers());
-    let res = response.json::<String>().await.unwrap();
-    res
 }

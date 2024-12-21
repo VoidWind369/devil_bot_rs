@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 pub mod app_qq;
 pub mod openid;
+pub mod app_admin_power;
 
 impl ConfigDatabase {
     pub async fn mysql_om(self) -> Pool<MySql> {

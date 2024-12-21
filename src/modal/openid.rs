@@ -2,6 +2,7 @@ use crate::util::Config;
 use serde::{Deserialize, Serialize};
 use sqlx::{Error, FromRow};
 use std::fmt::{Display, Formatter};
+use sqlx::mysql::{MySqlQueryResult, MySqlRow};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Openid {
@@ -18,6 +19,16 @@ impl Openid {
         sqlx::query_as::<_, Self>(sql)
             .bind(qq)
             .fetch_one(&pool)
+            .await
+    }
+
+    pub async fn update_name(qq: &str, name: &str) -> Result<MySqlQueryResult, Error> {
+        let pool = Config::get().await.get_database().mysql_om().await;
+        let sql = "update app_openid a, app_qq b set a.`name`= ? where a.id = b.openid_id and b.qq = ?";
+        sqlx::query(sql)
+            .bind(name)
+            .bind(qq)
+            .execute(&pool)
             .await
     }
 }
