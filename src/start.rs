@@ -5,7 +5,6 @@ use crate::modal::openid::Openid;
 use crate::om_api::menu::Menu;
 use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
-use rand::Rng;
 use reqwest::Client;
 use serde_json::Value;
 use void_log::*;
@@ -46,7 +45,7 @@ pub async fn listen(ob_data: OneBotData) {
             log_info!("Send end")
         }
 
-        if at.starts_with(ob_data.self_id.unwrap().to_string().as_str()) {
+        /*if at.starts_with(ob_data.self_id.unwrap().to_string().as_str()) {
             let api = zn_api().await;
             send_msg(
                 SendMessageType::Group,
@@ -56,7 +55,7 @@ pub async fn listen(ob_data: OneBotData) {
                 Some(&ob_data.user_id.unwrap().to_string()),
             )
             .await;
-        }
+        }*/
         if msg.starts_with("查询日记#") {
             let mut split_str = msg.split('#').skip(1);
             let tag = split_str.next().unwrap_or_default();
