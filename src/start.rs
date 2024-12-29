@@ -7,7 +7,7 @@ use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
 use rand::Rng;
 use reqwest::Client;
-use serde_json::{json, Value};
+use serde_json::Value;
 use void_log::*;
 
 pub async fn listen(ob_data: OneBotData) {
@@ -139,7 +139,7 @@ pub async fn listen(ob_data: OneBotData) {
         }
 
         // 彩蛋
-        let mut rng = rand::thread_rng();
+        /*let mut rng = rand::thread_rng();
         let z = rng.gen_range(0.00..1000.00);
         if msg.eq("指令") && z > 800.00 {
             let api = zn_api().await;
@@ -168,7 +168,7 @@ pub async fn listen(ob_data: OneBotData) {
             }
 
             log_info!("{y}")
-        }
+        }*/
     }
 }
 
