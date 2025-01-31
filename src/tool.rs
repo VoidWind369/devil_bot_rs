@@ -43,13 +43,13 @@ pub struct UserModel {
 
 pub async fn get_jin_time(user: i64, group: i64) -> String {
     let config = Config::get().await;
-    let url = format!("{}/get_time", config.api.unwrap().url.unwrap());
+    let url = format!("{}/time", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 1,
         "user": user.to_string(),
         "group": group.to_string(),
     });
-    let response = Client::new().post(url).json(&json).send().await;
+    let response = Client::new().get(url).json(&json).send().await;
     match response {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
@@ -65,14 +65,14 @@ pub async fn get_jin_time(user: i64, group: i64) -> String {
 
 pub async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, user: Option<String>) -> i64 {
     let config = Config::get().await;
-    let url = format!("{}/set_time", config.api.unwrap().url.unwrap());
+    let url = format!("{}/time", config.api.unwrap().url.unwrap());
     let up = UpJinTime {
         id: 1,
         up_time,
         deviate_time,
         user,
     };
-    let response = Client::new().post(url)
+    let response = Client::new().put(url)
         .json(&up).send().await;
     match response {
         Ok(re) => {
@@ -103,13 +103,13 @@ pub async fn set_jin_time(up_time: Option<String>, deviate_time: Option<i64>, us
 /// ```
 pub async fn get_users(user: i64, user_type: i64) -> Vec<UserModel> {
     let config = Config::get().await;
-    let url = format!("{}/get_users", config.api.unwrap().url.unwrap());
+    let url = format!("{}/users", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 0,
         "name": user.to_string(),
         "user_type": user_type
     });
-    match Client::new().post(url).json(&json).send().await {
+    match Client::new().get(url).json(&json).send().await {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Get Users {}", &res.message);
@@ -124,13 +124,13 @@ pub async fn get_users(user: i64, user_type: i64) -> Vec<UserModel> {
 
 pub async fn set_user_view(user: &str, view: i64) -> i64 {
     let config = Config::get().await;
-    let url = format!("{}/set_user_view", config.api.unwrap().url.unwrap());
+    let url = format!("{}/user", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 0,
         "name": user,
         "view": view
     });
-    match Client::new().post(url).json(&json).send().await {
+    match Client::new().patch(url).json(&json).send().await {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set UserView {}", &res.message);
@@ -149,13 +149,13 @@ pub async fn set_user_type(user: &str, user_type: i64) -> i64 {
         return 0;
     }
     let config = Config::get().await;
-    let url = format!("{}/set_user_type", config.api.unwrap().url.unwrap());
+    let url = format!("{}/user", config.api.unwrap().url.unwrap());
     let json = json!({
         "id": 0,
         "name": user,
         "user_type": user_type
     });
-    match Client::new().post(url).json(&json).send().await {
+    match Client::new().patch(url).json(&json).send().await {
         Ok(re) => {
             let res = re.json::<JinApi>().await.unwrap();
             log_info!("Set UserType {}", &res.message);
