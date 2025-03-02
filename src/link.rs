@@ -16,8 +16,8 @@ pub async fn conn() {
     let (mut socket, mut message) = client.split();
 
     let handle = handle(&mut message);
-    let intent = intent(&mut socket);
-    tokio::join!(handle, intent);
+    // let intent = intent(&mut socket);
+    tokio::join!(handle);
 }
 
 async fn handle(message: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
