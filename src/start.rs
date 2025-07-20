@@ -245,7 +245,7 @@ async fn bz_api(tag: &str) -> String {
 }
 
 async fn g_api(tag: &str) -> String {
-    let url = format!("http://39.108.119.184:8422/tag/{tag}");
+    let url = format!("http://www.coc-hs.cn/tag/{tag}");
     let mut uc = UnionClan::new(&url).await;
     uc.union = "积分G盟".to_string();
     uc.to_string()
