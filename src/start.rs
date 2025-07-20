@@ -225,7 +225,9 @@ impl Display for UnionClan {
             UnionClanState::OK => "正常",
             UnionClanState::LOCK => "冻结",
             UnionClanState::WORM => "黑名单",
-            UnionClanState::FALSE => return write!(f, "标签：{}\n状态：不存在", self.tag),
+            UnionClanState::FALSE => {
+                return write!(f, "标签：联盟：{}\n{}\n状态：不存在", self.union, self.tag)
+            }
         };
         write!(
             f,
