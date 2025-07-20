@@ -6,7 +6,9 @@ use crate::om_api::menu::Menu;
 use crate::om_api::record::{base64img, Record};
 use crate::util::Config;
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fmt::{Display, Formatter};
 use void_log::*;
 
 pub async fn listen(ob_data: OneBotData) {
@@ -137,6 +139,28 @@ pub async fn listen(ob_data: OneBotData) {
             .await;
         }
 
+        if msg.starts_with("查询部落#") {
+            let mut split = msg.split('#').skip(1);
+            let tag = split.next().unwrap_or_default();
+            let (bz, g) = (bz_api(tag).await, g_api(tag).await);
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &bz,
+                None,
+            )
+            .await;
+            send_msg(
+                SendMessageType::Group,
+                ob_data.user_id,
+                Some(group),
+                &g,
+                None,
+            )
+            .await;
+        }
+
         // 彩蛋
         /*let mut rng = rand::thread_rng();
         let z = rng.gen_range(0.00..1000.00);
@@ -169,6 +193,60 @@ pub async fn listen(ob_data: OneBotData) {
             log_info!("{y}")
         }*/
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct UnionClan {
+    tag: String,
+    name: String,
+    state: UnionClanState,
+    union: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+enum UnionClanState {
+    OK,
+    LOCK,
+    WORM,
+    #[default]
+    FALSE,
+}
+
+impl UnionClan {
+    async fn new(url: &str) -> Self {
+        let response = reqwest::get(url).await.unwrap();
+        response.json::<Self>().await.unwrap_or_default()
+    }
+}
+
+impl Display for UnionClan {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let state_cn = match self.state {
+            UnionClanState::OK => "正常",
+            UnionClanState::LOCK => "冻结",
+            UnionClanState::WORM => "黑名单",
+            UnionClanState::FALSE => return write!(f, "标签：{}\n状态：不存在", self.tag),
+        };
+        write!(
+            f,
+            "联盟：{}\n标签：{}\n部落：{}\n状态：{}",
+            self.union, self.tag, self.name, state_cn
+        )
+    }
+}
+
+async fn bz_api(tag: &str) -> String {
+    let url = format!("http://39.108.119.184:8422/tag/{tag}");
+    let mut uc = UnionClan::new(&url).await;
+    uc.union = "不战联盟".to_string();
+    uc.to_string()
+}
+
+async fn g_api(tag: &str) -> String {
+    let url = format!("http://39.108.119.184:8422/tag/{tag}");
+    let mut uc = UnionClan::new(&url).await;
+    uc.union = "积分G盟".to_string();
+    uc.to_string()
 }
 
 async fn zn_api() -> String {
